@@ -7,6 +7,4 @@ import java.util.List;
 public interface CropInfoProvider {
 
     List<PerenualPlantResponse> searchCrops(String query);
-
-    PerenualPlantResponse getCropDetails(Integer providerCropId);
 }

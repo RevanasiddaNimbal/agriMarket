@@ -40,7 +40,7 @@ public class CropInfo {
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
-    @Column(name = "life_cycle", length = 50)
+    @Column(name = "life_cycle", columnDefinition = "TEXT")
     private String lifeCycle;
 
     @Column(name = "growth_stages", columnDefinition = "TEXT")

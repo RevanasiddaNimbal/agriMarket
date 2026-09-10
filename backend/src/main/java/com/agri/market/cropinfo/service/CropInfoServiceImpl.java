@@ -16,20 +16,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = true)
+@Transactional
 public class CropInfoServiceImpl implements CropInfoService {
 
-    private static final List<String> DEFAULT_CROPS = List.of(
-            "rice",
-            "wheat",
-            "tomato",
-            "potato"
-    );
+    private static final int MAX_RESULTS = 50;
+
     private final CropInfoRepository cropInfoRepository;
     private final CropInfoProvider cropInfoProvider;
     private final CropInfoMapper cropInfoMapper;
@@ -37,40 +38,28 @@ public class CropInfoServiceImpl implements CropInfoService {
     @Override
     @Transactional
     public List<CropSummaryDto> getFeaturedCrops() {
-        log.info("Fetching featured crop information");
+        List<CropInfo> existingCrops = cropInfoRepository.findAll();
 
-        List<CropInfo> storedCrops = cropInfoRepository.findAll();
-
-        if (!storedCrops.isEmpty()) {
-            log.info(
-                    "Found {} crop records in database",
-                    storedCrops.size()
-            );
-
-            return storedCrops.stream()
+        if (!existingCrops.isEmpty()) {
+            return existingCrops.stream()
+                    .limit(MAX_RESULTS)
                     .map(cropInfoMapper::toSummaryDto)
                     .toList();
         }
 
-        log.info(
-                "No crop information found in database. Loading default crops from Perenual"
-        );
+        log.info("Crop information database is empty, fetching initial crop data");
 
-        Map<String, CropInfo> crops = new LinkedHashMap<>();
+        List<PerenualPlantResponse> providerCrops =
+                cropInfoProvider.searchCrops("");
 
-        for (String cropName : DEFAULT_CROPS) {
-            CropInfo cropInfo = fetchAndStoreCrop(cropName);
-
-            if (cropInfo != null) {
-                crops.put(
-                        cropInfo.getCropName().toLowerCase(Locale.ROOT),
-                        cropInfo
-                );
-            }
+        if (providerCrops.isEmpty()) {
+            return List.of();
         }
 
-        return crops.values()
-                .stream()
+        List<CropInfo> storedCrops = storeProviderCrops(providerCrops);
+
+        return storedCrops.stream()
+                .limit(MAX_RESULTS)
                 .map(cropInfoMapper::toSummaryDto)
                 .toList();
     }
@@ -78,280 +67,198 @@ public class CropInfoServiceImpl implements CropInfoService {
     @Override
     @Transactional
     public CropSearchResponseDto searchCrop(String query) {
-        validateQuery(query);
+        if (!StringUtils.hasText(query)) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+        }
 
-        String normalizedQuery = normalizeQuery(query);
+        String normalizedQuery = normalize(query);
 
-        log.info(
-                "Crop information search request received for query: {}",
-                normalizedQuery
-        );
+        List<CropInfo> storedMatches = findStoredMatches(normalizedQuery);
 
-        Optional<CropInfo> storedCrop =
-                findStoredCrop(normalizedQuery);
-
-        if (storedCrop.isPresent()) {
-            log.info(
-                    "Crop information found in database for query: {}",
+        if (!storedMatches.isEmpty()) {
+            List<CropInfo> ranked = rankStoredCrops(
+                    storedMatches,
                     normalizedQuery
             );
 
-            return buildSuccessResponse(
-                    normalizedQuery,
-                    storedCrop.get(),
-                    "Crop information found in database"
+            return buildResponse(
+                    query,
+                    ranked,
+                    true,
+                    "Crop information found."
             );
         }
 
-        log.info(
-                "Crop information not found in database. Calling Perenual for query: {}",
-                normalizedQuery
-        );
+        log.info("No crop information found in database for query: {}", query);
 
-        CropInfo cropInfo = fetchAndStoreCrop(normalizedQuery);
+        List<PerenualPlantResponse> providerCrops =
+                cropInfoProvider.searchCrops(query);
 
-        if (cropInfo == null) {
-            log.warn(
-                    "No crop information found for query: {}",
-                    normalizedQuery
+        if (!providerCrops.isEmpty()) {
+            List<CropInfo> storedCrops =
+                    storeProviderCrops(providerCrops);
+
+            List<CropInfo> ranked =
+                    rankStoredCrops(storedCrops, normalizedQuery);
+
+            boolean found = ranked.stream()
+                    .anyMatch(crop -> isMatchingCrop(crop, normalizedQuery));
+
+            return buildResponse(
+                    query,
+                    ranked,
+                    found,
+                    found
+                            ? "Crop information found."
+                            : "Related crop information found."
             );
-
-            return CropSearchResponseDto.builder()
-                    .found(false)
-                    .query(normalizedQuery)
-                    .crop(null)
-                    .message(
-                            "No crop information found for the requested crop"
-                    )
-                    .build();
         }
 
-        return buildSuccessResponse(
-                normalizedQuery,
-                cropInfo,
-                "Crop information found successfully"
+        List<CropInfo> fallbackCrops = cropInfoRepository.findAll()
+                .stream()
+                .limit(MAX_RESULTS)
+                .toList();
+
+        return buildResponse(
+                query,
+                fallbackCrops,
+                false,
+                fallbackCrops.isEmpty()
+                        ? "No crop information found."
+                        : "No exact crop match found. Showing available crop information."
         );
     }
 
     @Override
-    public CropInfoResponseDto getCropDetails(String cropId) {
-        validateCropId(cropId);
-
-        log.info(
-                "Fetching crop information for ID: {}",
-                cropId
-        );
-
-        CropInfo cropInfo =
-                cropInfoRepository.findById(cropId)
-                        .orElseThrow(() -> {
-                            log.warn(
-                                    "Crop information not found for ID: {}",
-                                    cropId
-                            );
-
-                            return new BusinessException(
-                                    ErrorCode.RESOURCE_NOT_FOUND
-                            );
-                        });
+    @Transactional(readOnly = true)
+    public CropInfoResponseDto getCropById(String cropId) {
+        CropInfo cropInfo = cropInfoRepository.findById(cropId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
 
         return cropInfoMapper.toResponseDto(cropInfo);
     }
 
-    private CropInfo fetchAndStoreCrop(String query) {
-
-        List<PerenualPlantResponse> searchResults =
-                cropInfoProvider.searchCrops(query);
-
-        if (searchResults == null || searchResults.isEmpty()) {
-            return null;
-        }
-
-        PerenualPlantResponse matchedCrop =
-                findBestMatchingProviderCrop(
-                        query,
-                        searchResults
-                );
-
-        if (matchedCrop == null || matchedCrop.getId() == null) {
-            log.warn(
-                    "No suitable Perenual crop found for query: {}",
-                    query
-            );
-
-            return null;
-        }
-
-        PerenualPlantResponse detailedCrop =
-                cropInfoProvider.getCropDetails(
-                        matchedCrop.getId()
-                );
-
-        if (!isValidProviderCrop(detailedCrop)) {
-
-            log.warn(
-                    "Perenual returned no valid detailed information for query: {}",
-                    query
-            );
-
-            return null;
-        }
-
-        String cropName =
-                detailedCrop.getCommon_name().trim();
-
-        Optional<CropInfo> existing =
-                cropInfoRepository.findByCropNameIgnoreCase(cropName);
-
-        if (existing.isPresent()) {
-            CropInfo cropInfo = existing.get();
-
-            cropInfoMapper.updateEntity(
-                    cropInfo,
-                    detailedCrop
-            );
-
-            CropInfo saved =
-                    cropInfoRepository.save(cropInfo);
-
-            log.info(
-                    "Updated existing crop information in database: {}",
-                    saved.getCropName()
-            );
-
-            return saved;
-        }
-
-        CropInfo cropInfo =
-                cropInfoMapper.toEntity(detailedCrop);
-
-        CropInfo saved =
-                cropInfoRepository.save(cropInfo);
-
-        log.info(
-                "Saved complete crop information to database: {}",
-                saved.getCropName()
-        );
-
-        return saved;
+    private List<CropInfo> findStoredMatches(String query) {
+        return cropInfoRepository.findAll()
+                .stream()
+                .filter(crop -> isMatchingCrop(crop, query))
+                .toList();
     }
 
-    private PerenualPlantResponse findBestMatchingProviderCrop(
-            String query,
-            List<PerenualPlantResponse> results
-    ) {
-        String normalizedQuery =
-                normalizeQuery(query);
-
-        List<PerenualPlantResponse> validResults =
-                results.stream()
-                        .filter(this::isValidProviderCrop)
-                        .toList();
-
-        Optional<PerenualPlantResponse> exactCommonName =
-                validResults.stream()
-                        .filter(crop ->
-                                normalizeQuery(crop.getCommon_name())
-                                        .equals(normalizedQuery)
-                        )
-                        .findFirst();
-
-        if (exactCommonName.isPresent()) {
-            return exactCommonName.get();
-        }
-
-        Optional<PerenualPlantResponse> commonNameContains =
-                validResults.stream()
-                        .filter(crop ->
-                                normalizeQuery(crop.getCommon_name())
-                                        .contains(normalizedQuery)
-                                        || normalizedQuery.contains(
-                                        normalizeQuery(
-                                                crop.getCommon_name()
-                                        )
-                                )
-                        )
-                        .findFirst();
-
-        if (commonNameContains.isPresent()) {
-            return commonNameContains.get();
-        }
-
-        Optional<PerenualPlantResponse> scientificNameMatch =
-                validResults.stream()
-                        .filter(crop ->
-                                containsIgnoreCase(
-                                        crop.getScientific_name(),
-                                        normalizedQuery
-                                )
-                        )
-                        .findFirst();
-
-        if (scientificNameMatch.isPresent()) {
-            return scientificNameMatch.get();
-        }
-
-        Optional<PerenualPlantResponse> aliasMatch =
-                validResults.stream()
-                        .filter(crop ->
-                                containsIgnoreCase(
-                                        crop.getOther_name(),
-                                        normalizedQuery
-                                )
-                        )
-                        .findFirst();
-
-        if (aliasMatch.isPresent()) {
-            return aliasMatch.get();
-        }
-
-        return null;
-    }
-
-    private Optional<CropInfo> findStoredCrop(String query) {
-
-        Optional<CropInfo> byName =
-                cropInfoRepository.findByCropNameIgnoreCase(query);
-
-        if (byName.isPresent()) {
-            return byName;
-        }
-
-        return cropInfoRepository
-                .findByScientificNameIgnoreCase(query);
-    }
-
-    private CropSearchResponseDto buildSuccessResponse(
-            String query,
-            CropInfo cropInfo,
-            String message
-    ) {
-        return CropSearchResponseDto.builder()
-                .found(true)
-                .query(query)
-                .crop(cropInfoMapper.toSummaryDto(cropInfo))
-                .message(message)
-                .build();
-    }
-
-    private boolean containsIgnoreCase(
-            List<String> values,
+    private List<CropInfo> rankStoredCrops(
+            List<CropInfo> crops,
             String query
     ) {
-        if (values == null || values.isEmpty()) {
-            return false;
+        return crops.stream()
+                .sorted(
+                        Comparator
+                                .comparingInt((CropInfo crop) ->
+                                        calculateMatchRank(crop, query))
+                                .thenComparing(
+                                        crop -> normalize(crop.getCropName()),
+                                        Comparator.nullsLast(String::compareTo)
+                                )
+                )
+                .limit(MAX_RESULTS)
+                .toList();
+    }
+
+    private int calculateMatchRank(
+            CropInfo crop,
+            String query
+    ) {
+        String cropName = normalize(crop.getCropName());
+        String scientificName = normalize(crop.getScientificName());
+
+        if (cropName.equals(query)) {
+            return 0;
         }
 
-        return values.stream()
-                .filter(StringUtils::hasText)
-                .map(value ->
-                        value.trim().toLowerCase(Locale.ROOT)
-                )
-                .anyMatch(value ->
-                        value.equals(query)
-                                || value.contains(query)
-                                || query.contains(value)
-                );
+        if (cropName.startsWith(query)) {
+            return 1;
+        }
+
+        if (cropName.contains(query)) {
+            return 2;
+        }
+
+        if (scientificName.equals(query)) {
+            return 3;
+        }
+
+        if (scientificName.contains(query)) {
+            return 4;
+        }
+
+        return 5;
+    }
+
+    private boolean isMatchingCrop(
+            CropInfo crop,
+            String query
+    ) {
+        String cropName = normalize(crop.getCropName());
+        String scientificName = normalize(crop.getScientificName());
+
+        return cropName.contains(query)
+                || scientificName.contains(query);
+    }
+
+    private List<CropInfo> storeProviderCrops(
+            List<PerenualPlantResponse> providerCrops
+    ) {
+        Map<String, CropInfo> existingByName =
+                cropInfoRepository.findAll()
+                        .stream()
+                        .filter(crop -> StringUtils.hasText(crop.getCropName()))
+                        .collect(Collectors.toMap(
+                                crop -> normalize(crop.getCropName()),
+                                Function.identity(),
+                                (first, second) -> first
+                        ));
+
+        List<PerenualPlantResponse> uniqueProviderCrops =
+                providerCrops.stream()
+                        .filter(this::isValidProviderCrop)
+                        .collect(Collectors.toMap(
+                                crop -> normalize(crop.getCommon_name()),
+                                Function.identity(),
+                                (first, second) -> first
+                        ))
+                        .values()
+                        .stream()
+                        .limit(MAX_RESULTS)
+                        .toList();
+
+        List<CropInfo> cropsToSave = uniqueProviderCrops.stream()
+                .map(providerCrop -> {
+                    String normalizedName =
+                            normalize(providerCrop.getCommon_name());
+
+                    CropInfo existing =
+                            existingByName.get(normalizedName);
+
+                    if (existing != null) {
+                        cropInfoMapper.updateEntity(
+                                existing,
+                                providerCrop
+                        );
+                        return existing;
+                    }
+
+                    CropInfo newCrop =
+                            cropInfoMapper.toEntity(providerCrop);
+
+                    existingByName.put(
+                            normalizedName,
+                            newCrop
+                    );
+
+                    return newCrop;
+                })
+                .toList();
+
+        return cropInfoRepository.saveAll(cropsToSave);
     }
 
     private boolean isValidProviderCrop(
@@ -362,32 +269,34 @@ public class CropInfoServiceImpl implements CropInfoService {
                 && StringUtils.hasText(crop.getCommon_name());
     }
 
-    private String normalizeQuery(String query) {
-        return query
+    private CropSearchResponseDto buildResponse(
+            String query,
+            List<CropInfo> crops,
+            boolean found,
+            String message
+    ) {
+        List<CropSummaryDto> summaries = crops.stream()
+                .limit(MAX_RESULTS)
+                .map(cropInfoMapper::toSummaryDto)
+                .toList();
+
+        return CropSearchResponseDto.builder()
+                .found(found)
+                .query(query)
+                .crops(summaries)
+                .total(summaries.size())
+                .message(message)
+                .build();
+    }
+
+    private String normalize(String value) {
+        if (!StringUtils.hasText(value)) {
+            return "";
+        }
+
+        return value
                 .trim()
                 .replaceAll("\\s+", " ")
                 .toLowerCase(Locale.ROOT);
-    }
-
-    private void validateQuery(String query) {
-        if (!StringUtils.hasText(query)) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_REQUEST
-            );
-        }
-
-        if (query.trim().length() > 100) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_REQUEST
-            );
-        }
-    }
-
-    private void validateCropId(String cropId) {
-        if (!StringUtils.hasText(cropId)) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_REQUEST
-            );
-        }
     }
 }

@@ -1,0 +1,2 @@
+ALTER TABLE crop_info
+ALTER COLUMN life_cycle TYPE TEXT;

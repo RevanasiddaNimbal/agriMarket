@@ -19,11 +19,14 @@ import java.util.List;
 @Slf4j
 public class PerenualCropInfoProvider implements CropInfoProvider {
 
+    private static final int MAX_RESULTS = 50;
+
     private final RestClient perenualRestClient;
     private final CropInfoProperties properties;
 
     @Override
     public List<PerenualPlantResponse> searchCrops(String query) {
+
         log.info(
                 "Searching crop information from Perenual for query: {}",
                 query
@@ -32,12 +35,19 @@ public class PerenualCropInfoProvider implements CropInfoProvider {
         try {
             ResponseEntity<PerenualPlantSearchResponse> response =
                     perenualRestClient.get()
-                            .uri(uriBuilder -> uriBuilder
-                                    .path("/species-list")
-                                    .queryParam("key", properties.getApiKey())
-                                    .queryParam("q", query)
-                                    .queryParam("page", 1)
-                                    .build())
+                            .uri(uriBuilder -> {
+                                var builder = uriBuilder
+                                        .path("/species-list")
+                                        .queryParam("key", properties.getApiKey())
+                                        .queryParam("page", 1)
+                                        .queryParam("per_page", MAX_RESULTS);
+
+                                if (query != null && !query.isBlank()) {
+                                    builder.queryParam("q", query);
+                                }
+
+                                return builder.build();
+                            })
                             .retrieve()
                             .toEntity(PerenualPlantSearchResponse.class);
 
@@ -55,13 +65,20 @@ public class PerenualCropInfoProvider implements CropInfoProvider {
                 return Collections.emptyList();
             }
 
+            List<PerenualPlantResponse> crops =
+                    body.getData()
+                            .stream()
+                            .filter(this::isValidCrop)
+                            .limit(MAX_RESULTS)
+                            .toList();
+
             log.info(
-                    "Perenual returned {} crop results for query: {}",
-                    body.getData().size(),
+                    "Perenual returned {} valid crop results for query: {}",
+                    crops.size(),
                     query
             );
 
-            return body.getData();
+            return crops;
 
         } catch (Exception exception) {
             log.error(
@@ -74,49 +91,10 @@ public class PerenualCropInfoProvider implements CropInfoProvider {
         }
     }
 
-    @Override
-    public PerenualPlantResponse getCropDetails(Integer providerCropId) {
-        log.info(
-                "Fetching detailed crop information from Perenual for provider crop ID: {}",
-                providerCropId
-        );
-
-        try {
-            ResponseEntity<PerenualPlantResponse> response =
-                    perenualRestClient.get()
-                            .uri(uriBuilder -> uriBuilder
-                                    .path("/species/details/{id}")
-                                    .queryParam("key", properties.getApiKey())
-                                    .build(providerCropId))
-                            .retrieve()
-                            .toEntity(PerenualPlantResponse.class);
-
-            PerenualPlantResponse crop = response.getBody();
-
-            if (crop == null) {
-                log.warn(
-                        "Perenual returned empty crop details for provider crop ID: {}",
-                        providerCropId
-                );
-
-                return null;
-            }
-
-            log.info(
-                    "Successfully fetched detailed crop information from Perenual for provider crop ID: {}",
-                    providerCropId
-            );
-
-            return crop;
-
-        } catch (Exception exception) {
-            log.error(
-                    "Failed to fetch crop details from Perenual for provider crop ID: {}",
-                    providerCropId,
-                    exception
-            );
-
-            throw new BusinessException(ErrorCode.EXTERNAL_SERVICE_ERROR);
-        }
+    private boolean isValidCrop(PerenualPlantResponse crop) {
+        return crop != null
+                && crop.getId() != null
+                && crop.getCommon_name() != null
+                && !crop.getCommon_name().isBlank();
     }
 }

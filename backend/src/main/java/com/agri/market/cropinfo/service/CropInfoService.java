@@ -12,5 +12,5 @@ public interface CropInfoService {
 
     CropSearchResponseDto searchCrop(String query);
 
-    CropInfoResponseDto getCropDetails(String cropId);
+    CropInfoResponseDto getCropById(String cropId);
 }

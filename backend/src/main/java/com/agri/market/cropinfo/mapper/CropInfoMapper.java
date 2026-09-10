@@ -3,14 +3,19 @@ package com.agri.market.cropinfo.mapper;
 import com.agri.market.cropinfo.dto.CropInfoResponseDto;
 import com.agri.market.cropinfo.dto.CropSummaryDto;
 import com.agri.market.cropinfo.entity.CropInfo;
-import com.agri.market.cropinfo.model.PerenualImage;
 import com.agri.market.cropinfo.model.PerenualPlantResponse;
+import com.agri.market.cropinfo.provider.AgricultureCropDataProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class CropInfoMapper {
+
+    private final AgricultureCropDataProvider agricultureCropDataProvider;
 
     public CropInfoResponseDto toResponseDto(CropInfo entity) {
         if (entity == null) {
@@ -57,27 +62,90 @@ public class CropInfoMapper {
             return null;
         }
 
-        return CropInfo.builder()
-                .cropName(normalize(response.getCommon_name()))
-                .scientificName(getScientificName(response.getScientific_name()))
-                .description(response.getDescription())
-                .imageUrl(getImageUrl(response.getDefault_image()))
-                .lifeCycle(response.getCycle())
-                .growthStages(null)
-                .sowingInfo(null)
-                .growingDuration(response.getGrowth_rate())
-                .harvestingInfo(buildHarvestingInfo(
-                        response.getHarvest_season(),
-                        response.getHarvest_method()
+        AgricultureCropDataProvider.AgricultureData localData =
+                agricultureCropDataProvider.find(response.getCommon_name());
+
+        String cropName = StringUtils.hasText(response.getCommon_name())
+                ? response.getCommon_name().trim()
+                : "Unknown Crop";
+
+        CropInfo entity = CropInfo.builder()
+                .cropName(cropName)
+                .scientificName(firstAvailable(
+                        null,
+                        getScientificName(response),
+                        "Scientific name not available."
                 ))
-                .soilRequirements(getSoilRequirements(response.getSoil()))
-                .waterRequirements(response.getWatering())
-                .sunlightRequirements(getSunlightRequirements(response.getSunlight()))
-                .temperatureRequirements(null)
-                .commonPests(getPests(response.getPest_susceptibility()))
-                .commonDiseases(null)
-                .uses(null)
+                .description(firstAvailable(
+                        null,
+                        response.getDescription(),
+                        buildGenericDescription(cropName)
+                ))
+                .imageUrl(getImageUrl(response))
+                .lifeCycle(firstAvailable(
+                        null,
+                        response.getCycle(),
+                        "Life cycle varies by crop variety and growing conditions."
+                ))
+                .growthStages(firstAvailable(
+                        null,
+                        localData.growthStages(),
+                        "Germination → Vegetative Growth → Flowering → Maturity → Harvest"
+                ))
+                .sowingInfo(firstAvailable(
+                        null,
+                        localData.sowingInfo(),
+                        "Sow healthy planting material in well-prepared soil during the suitable local growing season."
+                ))
+                .growingDuration(firstAvailable(
+                        null,
+                        localData.growingDuration(),
+                        "Growing duration varies by crop variety and growing conditions."
+                ))
+                .harvestingInfo(firstAvailable(
+                        null,
+                        buildHarvestingInfo(response),
+                        localData.harvestingInfo(),
+                        "Harvest at the recommended maturity stage according to the crop and intended use."
+                ))
+                .soilRequirements(firstAvailable(
+                        null,
+                        joinValues(response.getSoil()),
+                        "Soil requirements vary by crop variety and local growing conditions."
+                ))
+                .waterRequirements(firstAvailable(
+                        null,
+                        response.getWatering(),
+                        "Water requirements vary by crop, growth stage and local conditions."
+                ))
+                .sunlightRequirements(firstAvailable(
+                        null,
+                        joinValues(response.getSunlight()),
+                        "Sunlight requirements vary by crop variety and growing conditions."
+                ))
+                .temperatureRequirements(firstAvailable(
+                        null,
+                        localData.temperatureRequirements(),
+                        "Suitable temperature varies by crop variety and growing conditions."
+                ))
+                .commonPests(firstAvailable(
+                        null,
+                        joinValues(response.getPest_susceptibility()),
+                        "Pest occurrence varies by crop, variety, season and local conditions."
+                ))
+                .commonDiseases(firstAvailable(
+                        null,
+                        localData.commonDiseases(),
+                        "Disease occurrence varies with crop, variety, weather and growing conditions."
+                ))
+                .uses(firstAvailable(
+                        null,
+                        localData.uses(),
+                        "Uses vary depending on the crop, variety and agricultural purpose."
+                ))
                 .build();
+
+        return entity;
     }
 
     public void updateEntity(CropInfo entity, PerenualPlantResponse response) {
@@ -85,173 +153,206 @@ public class CropInfoMapper {
             return;
         }
 
-        if (hasText(response.getCommon_name())) {
-            entity.setCropName(normalize(response.getCommon_name()));
-        }
+        AgricultureCropDataProvider.AgricultureData localData =
+                agricultureCropDataProvider.find(response.getCommon_name());
 
-        String scientificName =
-                getScientificName(response.getScientific_name());
+        String cropName = StringUtils.hasText(entity.getCropName())
+                ? entity.getCropName().trim()
+                : StringUtils.hasText(response.getCommon_name())
+                ? response.getCommon_name().trim()
+                : "Unknown Crop";
 
-        if (hasText(scientificName)) {
-            entity.setScientificName(scientificName);
-        }
+        entity.setCropName(cropName);
 
-        if (hasText(response.getDescription())) {
-            entity.setDescription(response.getDescription());
-        }
+        entity.setScientificName(firstAvailable(
+                entity.getScientificName(),
+                getScientificName(response),
+                "Scientific name not available."
+        ));
 
-        String imageUrl = getImageUrl(response.getDefault_image());
+        entity.setDescription(firstAvailable(
+                entity.getDescription(),
+                response.getDescription(),
+                buildGenericDescription(cropName)
+        ));
 
-        if (hasText(imageUrl)) {
-            entity.setImageUrl(imageUrl);
-        }
+        entity.setImageUrl(firstAvailable(
+                entity.getImageUrl(),
+                getImageUrl(response),
+                null
+        ));
 
-        if (hasText(response.getCycle())) {
-            entity.setLifeCycle(response.getCycle());
-        }
+        entity.setLifeCycle(firstAvailable(
+                entity.getLifeCycle(),
+                response.getCycle(),
+                "Life cycle varies by crop variety and growing conditions."
+        ));
 
-        if (hasText(response.getGrowth_rate())) {
-            entity.setGrowingDuration(response.getGrowth_rate());
-        }
+        entity.setGrowthStages(firstAvailable(
+                entity.getGrowthStages(),
+                localData.growthStages(),
+                "Germination → Vegetative Growth → Flowering → Maturity → Harvest"
+        ));
 
-        String harvestingInfo = buildHarvestingInfo(
-                response.getHarvest_season(),
-                response.getHarvest_method()
-        );
+        entity.setSowingInfo(firstAvailable(
+                entity.getSowingInfo(),
+                localData.sowingInfo(),
+                "Sow healthy planting material in well-prepared soil during the suitable local growing season."
+        ));
 
-        if (hasText(harvestingInfo)) {
-            entity.setHarvestingInfo(harvestingInfo);
-        }
+        entity.setGrowingDuration(firstAvailable(
+                entity.getGrowingDuration(),
+                localData.growingDuration(),
+                "Growing duration varies by crop variety and growing conditions."
+        ));
 
-        String soilRequirements =
-                getSoilRequirements(response.getSoil());
+        entity.setHarvestingInfo(firstAvailable(
+                entity.getHarvestingInfo(),
+                buildHarvestingInfo(response),
+                localData.harvestingInfo(),
+                "Harvest at the recommended maturity stage according to the crop and intended use."
+        ));
 
-        if (hasText(soilRequirements)) {
-            entity.setSoilRequirements(soilRequirements);
-        }
+        entity.setSoilRequirements(firstAvailable(
+                entity.getSoilRequirements(),
+                joinValues(response.getSoil()),
+                "Soil requirements vary by crop variety and local growing conditions."
+        ));
 
-        if (hasText(response.getWatering())) {
-            entity.setWaterRequirements(response.getWatering());
-        }
+        entity.setWaterRequirements(firstAvailable(
+                entity.getWaterRequirements(),
+                response.getWatering(),
+                "Water requirements vary by crop, growth stage and local conditions."
+        ));
 
-        String sunlightRequirements =
-                getSunlightRequirements(response.getSunlight());
+        entity.setSunlightRequirements(firstAvailable(
+                entity.getSunlightRequirements(),
+                joinValues(response.getSunlight()),
+                "Sunlight requirements vary by crop variety and growing conditions."
+        ));
 
-        if (hasText(sunlightRequirements)) {
-            entity.setSunlightRequirements(sunlightRequirements);
-        }
+        entity.setTemperatureRequirements(firstAvailable(
+                entity.getTemperatureRequirements(),
+                localData.temperatureRequirements(),
+                "Suitable temperature varies by crop variety and growing conditions."
+        ));
 
-        String pests =
-                getPests(response.getPest_susceptibility());
+        entity.setCommonPests(firstAvailable(
+                entity.getCommonPests(),
+                joinValues(response.getPest_susceptibility()),
+                "Pest occurrence varies by crop, variety, season and local conditions."
+        ));
 
-        if (hasText(pests)) {
-            entity.setCommonPests(pests);
-        }
+        entity.setCommonDiseases(firstAvailable(
+                entity.getCommonDiseases(),
+                localData.commonDiseases(),
+                "Disease occurrence varies with crop, variety, weather and growing conditions."
+        ));
+
+        entity.setUses(firstAvailable(
+                entity.getUses(),
+                localData.uses(),
+                "Uses vary depending on the crop, variety and agricultural purpose."
+        ));
     }
 
-    private String getScientificName(List<String> scientificNames) {
-        if (scientificNames == null || scientificNames.isEmpty()) {
-            return null;
-        }
-
-        return scientificNames.stream()
-                .filter(this::hasText)
-                .findFirst()
-                .map(String::trim)
-                .orElse(null);
+    private String firstAvailable(String existing, String newValue, String fallback) {
+        return firstAvailable(existing, newValue, null, fallback);
     }
 
-    private String getImageUrl(PerenualImage image) {
-        if (image == null) {
-            return null;
-        }
-
-        if (hasText(image.getRegular_url())) {
-            return image.getRegular_url();
-        }
-
-        if (hasText(image.getMedium_url())) {
-            return image.getMedium_url();
-        }
-
-        if (hasText(image.getOriginal_url())) {
-            return image.getOriginal_url();
-        }
-
-        if (hasText(image.getSmall_url())) {
-            return image.getSmall_url();
-        }
-
-        return image.getThumbnail();
-    }
-
-    private String getSoilRequirements(List<String> soil) {
-        if (soil == null || soil.isEmpty()) {
-            return null;
-        }
-
-        return soil.stream()
-                .filter(this::hasText)
-                .map(String::trim)
-                .distinct()
-                .reduce((a, b) -> a + ", " + b)
-                .orElse(null);
-    }
-
-    private String getSunlightRequirements(List<String> sunlight) {
-        if (sunlight == null || sunlight.isEmpty()) {
-            return null;
-        }
-
-        return sunlight.stream()
-                .filter(this::hasText)
-                .map(String::trim)
-                .distinct()
-                .reduce((a, b) -> a + ", " + b)
-                .orElse(null);
-    }
-
-    private String getPests(List<String> pests) {
-        if (pests == null || pests.isEmpty()) {
-            return null;
-        }
-
-        return pests.stream()
-                .filter(this::hasText)
-                .map(String::trim)
-                .distinct()
-                .reduce((a, b) -> a + ", " + b)
-                .orElse(null);
-    }
-
-    private String buildHarvestingInfo(
-            String harvestSeason,
-            String harvestMethod
+    private String firstAvailable(
+            String existing,
+            String firstValue,
+            String secondValue,
+            String fallback
     ) {
-        boolean hasSeason = hasText(harvestSeason);
-        boolean hasMethod = hasText(harvestMethod);
+        if (StringUtils.hasText(existing)) {
+            return existing;
+        }
 
-        if (!hasSeason && !hasMethod) {
+        if (StringUtils.hasText(firstValue)) {
+            return firstValue;
+        }
+
+        if (StringUtils.hasText(secondValue)) {
+            return secondValue;
+        }
+
+        return fallback;
+    }
+
+    private String buildGenericDescription(String cropName) {
+        return cropName + " is a plant that can be grown and managed according to suitable local soil, climate, water and cultivation conditions.";
+    }
+
+    private String getScientificName(PerenualPlantResponse response) {
+        if (response.getScientific_name() == null
+                || response.getScientific_name().isEmpty()) {
             return null;
         }
 
-        if (hasSeason && hasMethod) {
-            return "Season: " + harvestSeason.trim()
-                    + ", Method: " + harvestMethod.trim();
-        }
-
-        if (hasSeason) {
-            return "Season: " + harvestSeason.trim();
-        }
-
-        return "Method: " + harvestMethod.trim();
+        return response.getScientific_name()
+                .stream()
+                .filter(StringUtils::hasText)
+                .findFirst()
+                .orElse(null);
     }
 
-    private String normalize(String value) {
-        return hasText(value) ? value.trim() : null;
+    private String getImageUrl(PerenualPlantResponse response) {
+        if (response.getDefault_image() == null) {
+            return null;
+        }
+
+        if (StringUtils.hasText(response.getDefault_image().getOriginal_url())) {
+            return response.getDefault_image().getOriginal_url();
+        }
+
+        if (StringUtils.hasText(response.getDefault_image().getRegular_url())) {
+            return response.getDefault_image().getRegular_url();
+        }
+
+        if (StringUtils.hasText(response.getDefault_image().getMedium_url())) {
+            return response.getDefault_image().getMedium_url();
+        }
+
+        if (StringUtils.hasText(response.getDefault_image().getSmall_url())) {
+            return response.getDefault_image().getSmall_url();
+        }
+
+        return response.getDefault_image().getThumbnail();
     }
 
-    private boolean hasText(String value) {
-        return value != null && !value.isBlank();
+    private String joinValues(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+
+        String result = values.stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .distinct()
+                .reduce((first, second) -> first + ", " + second)
+                .orElse(null);
+
+        return StringUtils.hasText(result) ? result : null;
+    }
+
+    private String buildHarvestingInfo(PerenualPlantResponse response) {
+        String season = response.getHarvest_season();
+        String method = response.getHarvest_method();
+
+        if (StringUtils.hasText(season) && StringUtils.hasText(method)) {
+            return "Harvest season: " + season + ". Harvest method: " + method + ".";
+        }
+
+        if (StringUtils.hasText(season)) {
+            return "Harvest season: " + season + ".";
+        }
+
+        if (StringUtils.hasText(method)) {
+            return "Harvest method: " + method + ".";
+        }
+
+        return null;
     }
 }

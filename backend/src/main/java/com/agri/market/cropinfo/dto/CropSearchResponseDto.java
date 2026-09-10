@@ -3,6 +3,8 @@ package com.agri.market.cropinfo.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
@@ -24,7 +26,10 @@ public class CropSearchResponseDto {
     private String query;
 
     @Schema(description = "Matching crop information")
-    private CropSummaryDto crop;
+    private List<CropSummaryDto> crops;
+
+    @Schema(description = "Total number of returned crops")
+    private int total;
 
     @Schema(
             description = "Response message",
