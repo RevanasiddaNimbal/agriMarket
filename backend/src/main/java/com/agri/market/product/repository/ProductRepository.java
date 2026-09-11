@@ -29,4 +29,8 @@ public interface ProductRepository
             String farmerId,
             String status
     );
+
+    long countByFarmer_Id(
+            String farmerId
+    );
 }

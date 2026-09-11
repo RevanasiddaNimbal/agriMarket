@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -48,7 +49,13 @@ public class SecurityConfig {
             // OpenAPI / Swagger
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-ui.html"
+            "/swagger-ui.html",
+
+            // Public General Catalog & Advisory Services
+            "/api/v1/categories/**",
+            "/api/v1/weather/**",
+            "/api/v1/market-prices/**",
+            "/api/v1/crops/**"
     };
 
     private static final String[] ADMIN_ENDPOINTS = {
@@ -80,6 +87,14 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS)
+                        .permitAll()
+
+                        // Private User Product endpoints must be authenticated before general product matchers
+                        .requestMatchers("/api/v1/products/me")
+                        .authenticated()
+
+                        // Public Product browsing and search (GET only)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products", "/api/v1/products/search", "/api/v1/products/*", "/api/v1/products/*/images")
                         .permitAll()
 
                         .requestMatchers(ADMIN_ENDPOINTS)

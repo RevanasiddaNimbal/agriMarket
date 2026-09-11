@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -37,82 +39,48 @@ public class UserDashboardServiceImpl
         );
 
         final long totalOrders =
-                orderRepository
-                        .findAllByUserIdOrderByCreatedDateDesc(userId)
-                        .size();
+                orderRepository.countByUserId(userId);
 
         final long pendingPaymentOrders =
-                orderRepository
-                        .findAllByStatusOrderByCreatedDateDesc(
-                                OrderStatus.PENDING_PAYMENT
-                        )
-                        .stream()
-                        .filter(order ->
-                                order.getUser()
-                                        .getId()
-                                        .equals(userId)
-                        )
-                        .count();
+                orderRepository.countByUserIdAndStatus(
+                        userId,
+                        OrderStatus.PENDING_PAYMENT
+                );
 
         final long deliveredOrders =
-                orderRepository
-                        .findAllByStatusOrderByCreatedDateDesc(
-                                OrderStatus.DELIVERED
-                        )
-                        .stream()
-                        .filter(order ->
-                                order.getUser()
-                                        .getId()
-                                        .equals(userId)
-                        )
-                        .count();
+                orderRepository.countByUserIdAndStatus(
+                        userId,
+                        OrderStatus.DELIVERED
+                );
 
         final long activeOrders =
-                orderRepository
-                        .findAllByUserIdOrderByCreatedDateDesc(userId)
-                        .stream()
-                        .filter(order ->
-                                order.getStatus() == OrderStatus.CONFIRMED
-                                        || order.getStatus() == OrderStatus.PROCESSING
-                                        || order.getStatus() == OrderStatus.SHIPPED
-                                        || order.getStatus() == OrderStatus.OUT_FOR_DELIVERY
+                orderRepository.countByUserIdAndStatusIn(
+                        userId,
+                        List.of(
+                                OrderStatus.CONFIRMED,
+                                OrderStatus.PROCESSING,
+                                OrderStatus.SHIPPED,
+                                OrderStatus.OUT_FOR_DELIVERY
                         )
-                        .count();
+                );
 
         final long totalProducts =
-                productRepository
-                        .findAll()
-                        .stream()
-                        .filter(product ->
-                                product.getFarmer()
-                                        .getId()
-                                        .equals(userId)
-                        )
-                        .count();
+                productRepository.countByFarmer_Id(userId);
 
         final long activeProducts =
-                productRepository
-                        .countByFarmer_IdAndStatus(
-                                userId,
-                                ProductStatus.ACTIVE.name()
-                        );
+                productRepository.countByFarmer_IdAndStatus(
+                        userId,
+                        ProductStatus.ACTIVE.name()
+                );
 
         final long totalProductOrders =
-                orderRepository
-                        .findAllByItemsProductFarmerIdOrderByCreatedDateDesc(
-                                userId
-                        )
-                        .size();
+                orderRepository.countCustomerOrdersByFarmerId(userId);
 
         final long inventoryItems =
-                inventoryRepository
-                        .findAllByFarmerId(userId)
-                        .size();
+                inventoryRepository.countByFarmerId(userId);
 
         final long totalAddresses =
-                addressRepository
-                        .findAllByUserId(userId)
-                        .size();
+                addressRepository.countByUserId(userId);
 
         final UserDashboardBuyingDto buying =
                 UserDashboardBuyingDto.builder()

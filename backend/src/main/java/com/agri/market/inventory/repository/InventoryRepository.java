@@ -37,5 +37,14 @@ public interface InventoryRepository extends JpaRepository<Inventory, String> {
     List<Inventory> findAllByFarmerId(
             @Param("farmerId") String farmerId
     );
+
+    @Query("""
+            SELECT COUNT(i)
+            FROM Inventory i
+            WHERE i.product.farmer.id = :farmerId
+            """)
+    long countByFarmerId(
+            @Param("farmerId") String farmerId
+    );
 }
 
