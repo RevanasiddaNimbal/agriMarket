@@ -49,3 +49,12 @@ backend/src/main/resources/application-local.properties
 # JWT Keys
 backend/keys/local-only/private_key.pem
 backend/keys/local-only/public_key.pem
+
+#Frontend configuration
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.vscode/
+frontend/.idea/
+frontend/*.log
+frontend/.DS_Store
