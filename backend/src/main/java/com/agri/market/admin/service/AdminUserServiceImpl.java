@@ -40,12 +40,13 @@ public class AdminUserServiceImpl implements AdminUserService {
                 buildUserSpecification(request);
 
         log.debug(
-                "Admin user search requested: page={}, size={}, search={}, role={}, enabled={}, emailVerified={}, phoneVerified={}",
+                "Admin user search requested: page={}, size={}, search={}, role={}, enabled={}, accountLocked={}, emailVerified={}, phoneVerified={}",
                 request.getPage(),
                 request.getSize(),
                 request.getSearch(),
                 request.getRole(),
                 request.getEnabled(),
+                request.getAccountLocked(),
                 request.getEmailVerified(),
                 request.getPhoneVerified()
         );
@@ -248,6 +249,17 @@ public class AdminUserServiceImpl implements AdminUserService {
                             criteriaBuilder.equal(
                                     root.get("enabled"),
                                     request.getEnabled()
+                            )
+            );
+        }
+
+        if (request.getAccountLocked() != null) {
+
+            specification = specification.and(
+                    (root, query, criteriaBuilder) ->
+                            criteriaBuilder.equal(
+                                    root.get("accountLocked"),
+                                    request.getAccountLocked()
                             )
             );
         }

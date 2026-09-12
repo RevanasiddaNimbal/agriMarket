@@ -30,6 +30,13 @@ public class ProductResponseDto {
     )
     private String farmerId;
 
+    @JsonProperty("farmer_name")
+    @Schema(
+            description = "Full name of the farmer who owns the product",
+            example = "Revanasidda Nimbal"
+    )
+    private String farmerName;
+
     @JsonProperty("category_id")
     @Schema(
             description = "Identifier of the product category",

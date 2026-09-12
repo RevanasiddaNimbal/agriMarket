@@ -36,22 +36,32 @@ public class ProductSearchServiceImpl
     public ProductSearchResponseDto searchProducts(
             final ProductSearchRequestDto request
     ) {
+        return searchProducts(request, true);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductSearchResponseDto searchProducts(
+            final ProductSearchRequestDto request,
+            final boolean activeOnly
+    ) {
         log.info(
-                "Searching products. Query: {}, Category: {}, MinPrice: {}, MaxPrice: {}, Unit: {}, Location: {}, Status: {}",
+                "Searching products. Query: {}, Category: {}, MinPrice: {}, MaxPrice: {}, Unit: {}, Location: {}, Status: {}, ActiveOnly: {}",
                 request.getQuery(),
                 request.getCategoryId(),
                 request.getMinPrice(),
                 request.getMaxPrice(),
                 request.getUnit(),
                 request.getLocation(),
-                request.getStatus()
+                request.getStatus(),
+                activeOnly
         );
 
         final Specification<Product> specification =
                 buildSpecification(
                         request,
                         null,
-                        true
+                        activeOnly
                 );
 
         final Pageable pageable =
@@ -127,17 +137,19 @@ public class ProductSearchServiceImpl
         Specification<Product> specification =
                 (root, query, criteriaBuilder) -> null;
 
-        if (activeOnly) {
+        if (request.getStatus() != null
+                && !request.getStatus().isBlank()) {
+            if (!"ALL".equalsIgnoreCase(request.getStatus().trim())) {
+                specification = specification.and(
+                        ProductSpecification.hasStatus(
+                                parseStatus(request.getStatus())
+                        )
+                );
+            }
+        } else if (activeOnly) {
             specification = specification.and(
                     ProductSpecification.hasStatus(
                             ProductStatus.ACTIVE
-                    )
-            );
-        } else if (request.getStatus() != null
-                && !request.getStatus().isBlank()) {
-            specification = specification.and(
-                    ProductSpecification.hasStatus(
-                            parseStatus(request.getStatus())
                     )
             );
         }

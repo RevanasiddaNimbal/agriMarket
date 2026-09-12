@@ -9,6 +9,11 @@ public interface ProductSearchService {
             ProductSearchRequestDto request
     );
 
+    ProductSearchResponseDto searchProducts(
+            ProductSearchRequestDto request,
+            boolean activeOnly
+    );
+
     ProductSearchResponseDto searchMyProducts(
             ProductSearchRequestDto request,
             String userId

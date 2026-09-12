@@ -47,7 +47,7 @@ public class AdminProductServiceImpl implements AdminProductService {
                         .build();
 
         final ProductSearchResponseDto response =
-                productSearchService.searchProducts(searchRequest);
+                productSearchService.searchProducts(searchRequest, false);
 
         log.info(
                 "Admin product search completed. Total products: {}",

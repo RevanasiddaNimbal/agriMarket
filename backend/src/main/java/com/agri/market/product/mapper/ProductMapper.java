@@ -45,6 +45,11 @@ public class ProductMapper {
                                 ? farmer.getId()
                                 : null
                 )
+                .farmerName(
+                        farmer != null
+                                ? farmer.getFullName()
+                                : null
+                )
                 .categoryId(
                         category != null
                                 ? category.getId()

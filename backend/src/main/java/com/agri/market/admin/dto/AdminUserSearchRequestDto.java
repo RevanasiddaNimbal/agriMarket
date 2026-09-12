@@ -63,6 +63,12 @@ public class AdminUserSearchRequestDto {
     private Boolean enabled;
 
     @Schema(
+            description = "Filter users by account locked status",
+            example = "false"
+    )
+    private Boolean accountLocked;
+
+    @Schema(
             description = "Filter users by email verification status",
             example = "true"
     )
