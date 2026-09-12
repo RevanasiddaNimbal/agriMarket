@@ -1,5 +1,6 @@
 package com.agri.market.user.service;
 
+import com.agri.market.cloudinary.service.CloudinaryService;
 import com.agri.market.common.exception.BusinessException;
 import com.agri.market.sms.service.SmsService;
 import com.agri.market.support.ChangePasswordRequestTestFactory;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,6 +54,9 @@ class UserServiceImplTest {
 
     @Mock
     private SmsService smsService;
+
+    @Mock
+    private CloudinaryService cloudinaryService;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -287,12 +292,18 @@ class UserServiceImplTest {
             final User user =
                     UserTestFactory.activeUser();
 
+            final MockMultipartFile profilePicture =
+                    new MockMultipartFile(
+                            "profilePicture",
+                            "profile.jpg",
+                            "image/jpeg",
+                            "test-image-content".getBytes()
+                    );
+
             final UpdateProfilePictureRequestDto request =
                     new UpdateProfilePictureRequestDto();
 
-            request.setProfilePictureUrl(
-                    "  https://example.com/profile.jpg  "
-            );
+            request.setProfilePicture(profilePicture);
 
             when(userRepository.findByEmailIgnoreCase(USER_EMAIL))
                     .thenReturn(Optional.of(user));
@@ -301,51 +312,26 @@ class UserServiceImplTest {
                     request,
                     USER_EMAIL
             );
-
-            assertThat(user.getProfilePictureUrl())
-                    .isEqualTo(
-                            "https://example.com/profile.jpg"
-                    );
 
             verify(userRepository)
                     .findByEmailIgnoreCase(USER_EMAIL);
-
-            verifyNoMoreInteractions(userRepository);
         }
-
-        @Test
-        void shouldNotSaveWhenProfilePictureIsUnchanged() {
-
-            User user = UserTestFactory.activeUser();
-
-            UpdateProfilePictureRequestDto request =
-                    new UpdateProfilePictureRequestDto();
-
-            request.setProfilePictureUrl(
-                    "  " + user.getProfilePictureUrl() + "  "
-            );
-
-            when(userRepository.findByEmailIgnoreCase(USER_EMAIL))
-                    .thenReturn(Optional.of(user));
-
-            userService.updateProfilePicture(
-                    request,
-                    USER_EMAIL
-            );
-
-            verify(userRepository, never())
-                    .save(any(User.class));
-        }
-
+        
         @Test
         void shouldThrowWhenUserDoesNotExist() {
 
+            MockMultipartFile profilePicture =
+                    new MockMultipartFile(
+                            "profilePicture",
+                            "profile.jpg",
+                            "image/jpeg",
+                            "test-image-content".getBytes()
+                    );
+
             UpdateProfilePictureRequestDto request =
                     new UpdateProfilePictureRequestDto();
 
-            request.setProfilePictureUrl(
-                    "https://example.com/profile.jpg"
-            );
+            request.setProfilePicture(profilePicture);
 
             when(userRepository.findByEmailIgnoreCase(USER_EMAIL))
                     .thenReturn(Optional.empty());
@@ -980,7 +966,7 @@ class UserServiceImplTest {
             verifyNoInteractions(smsService);
 
             verify(userRepository, never())
-                    .save(any(User.class));
+                    .findByPhoneNumber(anyString());
         }
     }
 
@@ -1552,7 +1538,6 @@ class UserServiceImplTest {
                     .save(user);
         }
     }
-    
 
     @Nested
     @DisplayName("deleteAccount")

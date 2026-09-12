@@ -4,16 +4,56 @@ services:
     container_name: agromarket-postgres
     restart: unless-stopped
 
+    env_file:
+      - ./.env
+
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
 
     ports:
-      - "${DB_PORT}:5432"
+      - "${DB_PORT:-5439}:5432"
 
     volumes:
       - agromarket_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: agromarket-backend
+    restart: unless-stopped
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    env_file:
+      - ./.env
+
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+
+      JWT_PRIVATE_KEY_PATH: /app/secrets/private_key.pem
+      JWT_PUBLIC_KEY_PATH: /app/secrets/public_key.pem
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - ./keys/local-only:/app/secrets:ro
+
 
 volumes:
   agromarket_postgres_data:

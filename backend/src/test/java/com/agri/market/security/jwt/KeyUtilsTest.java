@@ -28,11 +28,22 @@ class KeyUtilsTest {
         assertThat(publicKey.getAlgorithm()).isEqualTo("RSA");
     }
 
+
     @Test
     void shouldRejectMissingKeyResource() {
-        assertThatThrownBy(() -> KeyUtils.loadPrivateKey("keys/local-only/missing.pem"))
+
+        final String missingKeyPath =
+                "keys/local-only/missing.pem";
+
+        assertThatThrownBy(
+                () -> KeyUtils.loadPrivateKey(missingKeyPath)
+        )
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Key resource not found");
+                .hasMessage(
+                        "Key file not found: " + missingKeyPath
+                );
     }
+
+
 }
 

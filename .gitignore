@@ -47,5 +47,5 @@ backend/.env.*
 backend/src/main/resources/application-local.properties
 
 # JWT Keys
-backend/src/main/resources/keys/local-only/private_key.pem
-backend/src/main/resources/keys/local-only/public_key.pem
+backend/keys/local-only/private_key.pem
+backend/keys/local-only/public_key.pem

@@ -1,0 +1,11 @@
+.git
+.gitignore
+.idea
+.vscode
+target
+.env
+.env.*
+keys/
+*.iml
+*.log
+src/main/resources/application-local.properties

@@ -1,8 +1,9 @@
 package com.agri.market.security.jwt;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -73,7 +74,7 @@ public final class KeyUtils {
             final String endMarker
     ) throws IOException {
 
-        final String pem = readKeyFromResource(resourcePath);
+        final String pem = readKeyFromFile(resourcePath);
 
         final String encodedKey = pem
                 .replace(beginMarker, "")
@@ -96,25 +97,22 @@ public final class KeyUtils {
         }
     }
 
-    private static String readKeyFromResource(
-            final String resourcePath
+    private static String readKeyFromFile(
+            final String filePath
     ) throws IOException {
 
-        try (InputStream inputStream =
-                     KeyUtils.class
-                             .getClassLoader()
-                             .getResourceAsStream(resourcePath)) {
+        final Path path = Path.of(filePath);
 
-            if (inputStream == null) {
-                throw new IllegalArgumentException(
-                        "Key resource not found: " + resourcePath
-                );
-            }
-
-            return new String(
-                    inputStream.readAllBytes(),
-                    StandardCharsets.UTF_8
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException(
+                    "Key file not found: " + filePath
             );
         }
+
+        return Files.readString(
+                path,
+                StandardCharsets.UTF_8
+        );
     }
 }
+

@@ -310,27 +310,22 @@ class UserControllerTest {
             final User user =
                     authenticatedUser();
 
-            final UpdateProfilePictureRequestDto request =
-                    UpdateProfilePictureRequestTestFactory
-                            .validRequest();
-
             mockMvc.perform(
-                            patch(
+                            multipart(
                                     BASE_URL
                                             + "/profile-picture"
                             )
+                                    .file(
+                                            "profilePicture",
+                                            "test-image-content".getBytes()
+                                    )
                                     .principal(
                                             authentication(user)
                                     )
-                                    .contentType(
-                                            MediaType.APPLICATION_JSON
-                                    )
-                                    .content(
-                                            objectMapper
-                                                    .writeValueAsString(
-                                                            request
-                                                    )
-                                    )
+                                    .with(request -> {
+                                        request.setMethod("PATCH");
+                                        return request;
+                                    })
                     )
                     .andExpect(
                             status().isNoContent()
@@ -352,27 +347,18 @@ class UserControllerTest {
             final User user =
                     authenticatedUser();
 
-            final UpdateProfilePictureRequestDto request =
-                    UpdateProfilePictureRequestTestFactory
-                            .invalidRequest();
-
             mockMvc.perform(
-                            patch(
+                            multipart(
                                     BASE_URL
                                             + "/profile-picture"
                             )
                                     .principal(
                                             authentication(user)
                                     )
-                                    .contentType(
-                                            MediaType.APPLICATION_JSON
-                                    )
-                                    .content(
-                                            objectMapper
-                                                    .writeValueAsString(
-                                                            request
-                                                    )
-                                    )
+                                    .with(request -> {
+                                        request.setMethod("PATCH");
+                                        return request;
+                                    })
                     )
                     .andExpect(
                             status().isBadRequest()
@@ -381,6 +367,7 @@ class UserControllerTest {
             verifyNoInteractions(userService);
         }
     }
+
 
     // ============================================================
     // SEND PHONE OTP
