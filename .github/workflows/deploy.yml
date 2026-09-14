@@ -97,3 +97,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/agrimarket-backend:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/agrimarket-backend:latest
+
+      - name: Deploy to Render
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
