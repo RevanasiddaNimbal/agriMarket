@@ -21,6 +21,7 @@ public class OpenMeteoWeatherProvider implements WeatherProvider {
     private static final String TIMEZONE = "auto";
 
     private final WeatherProperties weatherProperties;
+    private final RestClient openMeteoRestClient;
 
     @Override
     public DailyWeatherResponseDto getDailyWeather(
@@ -36,9 +37,7 @@ public class OpenMeteoWeatherProvider implements WeatherProvider {
         );
 
         try {
-            OpenMeteoDailyResponse response = RestClient.builder()
-                    .baseUrl(weatherProperties.getBaseUrl())
-                    .build()
+            OpenMeteoDailyResponse response = openMeteoRestClient
                     .get()
                     .uri(uriBuilder -> uriBuilder
                             .queryParam("latitude", latitude)
@@ -101,13 +100,16 @@ public class OpenMeteoWeatherProvider implements WeatherProvider {
             return result;
 
         } catch (BusinessException exception) {
+
             throw exception;
 
         } catch (RestClientException exception) {
+
             log.error(
-                    "Open-Meteo daily weather request failed: latitude={}, longitude={}",
+                    "Open-Meteo daily weather request failed: latitude={}, longitude={}, error={}",
                     latitude,
                     longitude,
+                    exception.getMessage(),
                     exception
             );
 
@@ -116,10 +118,12 @@ public class OpenMeteoWeatherProvider implements WeatherProvider {
             );
 
         } catch (Exception exception) {
+
             log.error(
-                    "Unexpected error processing Open-Meteo daily response: latitude={}, longitude={}",
+                    "Unexpected error processing Open-Meteo daily response: latitude={}, longitude={}, error={}",
                     latitude,
                     longitude,
+                    exception.getMessage(),
                     exception
             );
 
@@ -143,9 +147,7 @@ public class OpenMeteoWeatherProvider implements WeatherProvider {
         );
 
         try {
-            OpenMeteoHourlyResponse response = RestClient.builder()
-                    .baseUrl(weatherProperties.getBaseUrl())
-                    .build()
+            OpenMeteoHourlyResponse response = openMeteoRestClient
                     .get()
                     .uri(uriBuilder -> uriBuilder
                             .queryParam("latitude", latitude)
@@ -207,13 +209,16 @@ public class OpenMeteoWeatherProvider implements WeatherProvider {
             return result;
 
         } catch (BusinessException exception) {
+
             throw exception;
 
         } catch (RestClientException exception) {
+
             log.error(
-                    "Open-Meteo hourly weather request failed: latitude={}, longitude={}",
+                    "Open-Meteo hourly weather request failed: latitude={}, longitude={}, error={}",
                     latitude,
                     longitude,
+                    exception.getMessage(),
                     exception
             );
 
@@ -222,10 +227,12 @@ public class OpenMeteoWeatherProvider implements WeatherProvider {
             );
 
         } catch (Exception exception) {
+
             log.error(
-                    "Unexpected error processing Open-Meteo hourly response: latitude={}, longitude={}",
+                    "Unexpected error processing Open-Meteo hourly response: latitude={}, longitude={}, error={}",
                     latitude,
                     longitude,
+                    exception.getMessage(),
                     exception
             );
 
