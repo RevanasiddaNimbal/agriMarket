@@ -29,6 +29,21 @@ jobs:
           java-version: "25"
           cache: maven
 
+      - name: Generate test JWT keys
+        working-directory: backend
+        run: |
+          mkdir -p keys/local-only
+
+          openssl genpkey \
+            -algorithm RSA \
+            -pkeyopt rsa_keygen_bits:2048 \
+            -out keys/local-only/private_key.pem
+
+          openssl pkey \
+            -in keys/local-only/private_key.pem \
+            -pubout \
+            -out keys/local-only/public_key.pem
+
       - name: Run tests
         working-directory: backend
         run: |
