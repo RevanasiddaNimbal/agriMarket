@@ -128,7 +128,6 @@ public class PaymentServiceImpl implements PaymentService {
         final PaymentTransaction transaction =
                 PaymentTransaction.builder()
                         .payment(savedPayment)
-                        .order(order)
                         .transactionType(TransactionType.PAYMENT)
                         .amount(order.getTotalAmount())
                         .status(
@@ -283,7 +282,6 @@ public class PaymentServiceImpl implements PaymentService {
         final PaymentTransaction refundTransaction =
                 PaymentTransaction.builder()
                         .payment(payment)
-                        .order(order)
                         .transactionType(TransactionType.REFUND)
                         .amount(payment.getAmount())
                         .status(PaymentStatus.REFUNDED)

@@ -39,7 +39,7 @@ public class PaymentTransactionServiceImpl
         );
 
         return paymentTransactionRepository
-                .findAllByOrderUserIdOrderByCreatedDateDesc(userId)
+                .findAllByPaymentOrderUserIdOrderByCreatedDateDesc(userId)
                 .stream()
                 .map(paymentTransactionMapper::toResponseDto)
                 .toList();

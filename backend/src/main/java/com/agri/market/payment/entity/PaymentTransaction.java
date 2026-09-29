@@ -1,7 +1,6 @@
 package com.agri.market.payment.entity;
 
 import com.agri.market.common.entity.BaseEntity;
-import com.agri.market.order.entity.Order;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,10 +13,6 @@ import java.math.BigDecimal;
                 @Index(
                         name = "idx_payment_transactions_payment_id",
                         columnList = "payment_id"
-                ),
-                @Index(
-                        name = "idx_payment_transactions_order_id",
-                        columnList = "order_id"
                 ),
                 @Index(
                         name = "idx_payment_transactions_type",
@@ -47,14 +42,6 @@ public class PaymentTransaction extends BaseEntity {
             foreignKey = @ForeignKey(name = "fk_payment_transaction_payment")
     )
     private Payment payment;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "order_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_payment_transaction_order")
-    )
-    private Order order;
 
     @Enumerated(EnumType.STRING)
     @Column(

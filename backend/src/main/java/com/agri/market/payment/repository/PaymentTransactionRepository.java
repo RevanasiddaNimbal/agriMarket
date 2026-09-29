@@ -16,12 +16,12 @@ public interface PaymentTransactionRepository
     );
 
     List<PaymentTransaction>
-    findAllByOrderUserIdOrderByCreatedDateDesc(
+    findAllByPaymentOrderUserIdOrderByCreatedDateDesc(
             String userId
     );
 
     List<PaymentTransaction>
-    findAllByOrderItemsProductFarmerIdOrderByCreatedDateDesc(
+    findAllByPaymentOrderItemsProductFarmerIdOrderByCreatedDateDesc(
             String farmerId
     );
 
