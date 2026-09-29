@@ -4,6 +4,7 @@ import com.agri.market.address.dto.AddressResponseDto;
 import com.agri.market.address.dto.CreateAddressRequestDto;
 import com.agri.market.address.dto.UpdateAddressRequestDto;
 import com.agri.market.address.entity.Address;
+import com.agri.market.order.entity.OrderAddressSnapshot;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -106,6 +107,29 @@ public class AddressMapper {
                 .defaultAddress(address.isDefaultAddress())
                 .createdDate(address.getCreatedDate())
                 .lastModifiedDate(address.getLastModifiedDate())
+                .build();
+    }
+
+    public AddressResponseDto toSnapshotResponse(
+            final OrderAddressSnapshot orderAddressSnapshot
+    ) {
+        return AddressResponseDto.builder()
+                .id(orderAddressSnapshot.getId())
+                .addressLine1(orderAddressSnapshot.getAddressLine1())
+                .addressLine2(orderAddressSnapshot.getAddressLine2())
+                .village(orderAddressSnapshot.getVillage())
+                .city(orderAddressSnapshot.getCity())
+                .district(orderAddressSnapshot.getDistrict())
+                .state(orderAddressSnapshot.getState())
+                .pincode(orderAddressSnapshot.getPincode())
+                .country(orderAddressSnapshot.getCountry())
+                .locationType(orderAddressSnapshot.getLocationType())
+                .latitude(orderAddressSnapshot.getLatitude())
+                .longitude(orderAddressSnapshot.getLongitude())
+                .addressType(orderAddressSnapshot.getAddressType())
+                .defaultAddress(false)
+                .createdDate(orderAddressSnapshot.getCreatedDate())
+                .lastModifiedDate(orderAddressSnapshot.getLastModifiedDate())
                 .build();
     }
 }

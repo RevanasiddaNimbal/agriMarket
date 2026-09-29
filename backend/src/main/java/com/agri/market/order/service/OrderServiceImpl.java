@@ -1,6 +1,8 @@
 package com.agri.market.order.service;
 
+import com.agri.market.address.dto.AddressResponseDto;
 import com.agri.market.address.entity.Address;
+import com.agri.market.address.mapper.AddressMapper;
 import com.agri.market.address.repository.AddressRepository;
 import com.agri.market.common.exception.BusinessException;
 import com.agri.market.common.exception.ErrorCode;
@@ -15,9 +17,11 @@ import com.agri.market.order.dto.OrderStatusUpdateRequestDto;
 import com.agri.market.order.dto.OrderTrackingResponseDto;
 import com.agri.market.order.dto.PlaceOrderRequestDto;
 import com.agri.market.order.entity.Order;
+import com.agri.market.order.entity.OrderAddressSnapshot;
 import com.agri.market.order.entity.OrderItem;
 import com.agri.market.order.entity.OrderStatus;
 import com.agri.market.order.mapper.OrderMapper;
+import com.agri.market.order.repository.OrderAddressSnapshotRepository;
 import com.agri.market.order.repository.OrderRepository;
 import com.agri.market.payment.service.PaymentService;
 import com.agri.market.product.entity.Product;
@@ -27,6 +31,7 @@ import com.agri.market.user.entity.User;
 import com.agri.market.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +44,9 @@ import java.util.List;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderAddressSnapshotRepository orderAddressSnapshotRepository;
     private final OrderMapper orderMapper;
+    private final AddressMapper addressMapper;
     private final PaymentService paymentService;
     private final ProductRepository productRepository;
     private final AddressRepository addressRepository;
@@ -140,10 +147,28 @@ public class OrderServiceImpl implements OrderService {
         final Order order =
                 Order.builder()
                         .user(user)
-                        .address(address)
                         .status(OrderStatus.PENDING_PAYMENT)
                         .totalAmount(subtotal)
                         .build();
+
+        final OrderAddressSnapshot addressSnapshot =
+                OrderAddressSnapshot.builder()
+                        .order(order)
+                        .addressLine1(address.getAddressLine1())
+                        .addressLine2(address.getAddressLine2())
+                        .village(address.getVillage())
+                        .city(address.getCity())
+                        .district(address.getDistrict())
+                        .state(address.getState())
+                        .pincode(address.getPincode())
+                        .country(address.getCountry())
+                        .latitude(address.getLatitude())
+                        .longitude(address.getLongitude())
+                        .locationType(address.getLocationType())
+                        .addressType(address.getAddressType())
+                        .build();
+
+        order.setAddressSnapshot(addressSnapshot);
 
         final OrderItem orderItem =
                 OrderItem.builder()
@@ -203,6 +228,66 @@ public class OrderServiceImpl implements OrderService {
                 );
 
         return orderMapper.toResponseDto(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AddressResponseDto getOrderAddress(
+            final String orderId,
+            final String userId
+    ) {
+
+        log.info(
+                "Fetching order address. Order: {}, User: {}",
+                orderId,
+                userId
+        );
+
+        final boolean isAdmin =
+                SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getAuthorities()
+                        .stream()
+                        .anyMatch(authority ->
+                                "ROLE_ADMIN".equals(
+                                        authority.getAuthority()
+                                )
+                        );
+
+        final Order order;
+
+        if (isAdmin) {
+            order =
+                    orderRepository.findById(orderId)
+                            .orElseThrow(() ->
+                                    new BusinessException(
+                                            ErrorCode.ORDER_NOT_FOUND
+                                    )
+                            );
+        } else {
+            order =
+                    orderRepository.findByIdAndUserId(
+                                    orderId,
+                                    userId
+                            )
+                            .orElseThrow(() ->
+                                    new BusinessException(
+                                            ErrorCode.ORDER_NOT_FOUND
+                                    )
+                            );
+        }
+
+        final OrderAddressSnapshot addressSnapshot =
+                orderAddressSnapshotRepository.findByOrderId(
+                                order.getId()
+                        )
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        ErrorCode.ADDRESS_NOT_FOUND
+                                )
+                        );
+
+        return addressMapper.toSnapshotResponse(addressSnapshot);
     }
 
     @Override

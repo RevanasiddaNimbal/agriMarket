@@ -1,6 +1,5 @@
 package com.agri.market.order.entity;
 
-import com.agri.market.address.entity.Address;
 import com.agri.market.common.entity.BaseEntity;
 import com.agri.market.user.entity.User;
 import jakarta.persistence.*;
@@ -43,13 +42,13 @@ public class Order extends BaseEntity {
     )
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "address_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_order_address")
+    @OneToOne(
+            mappedBy = "order",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
     )
-    private Address address;
+    private OrderAddressSnapshot addressSnapshot;
 
     @Enumerated(EnumType.STRING)
     @Column(

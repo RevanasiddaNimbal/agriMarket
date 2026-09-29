@@ -18,7 +18,11 @@ public class OrderMapper {
                 .id(order.getId())
                 .status(order.getStatus())
                 .totalAmount(order.getTotalAmount())
-                .addressId(order.getAddress().getId())
+                .addressId(
+                        order.getAddressSnapshot() == null
+                                ? null
+                                : order.getAddressSnapshot().getId()
+                )
                 .items(
                         order.getItems()
                                 .stream()

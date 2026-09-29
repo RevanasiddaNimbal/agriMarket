@@ -1,5 +1,6 @@
 package com.agri.market.order.controller;
 
+import com.agri.market.address.dto.AddressResponseDto;
 import com.agri.market.order.dto.OrderResponseDto;
 import com.agri.market.order.dto.OrderStatusUpdateRequestDto;
 import com.agri.market.order.dto.OrderTrackingResponseDto;
@@ -150,6 +151,45 @@ public class OrderController {
 
         final OrderResponseDto response =
                 orderService.getOrder(
+                        orderId,
+                        user.getId()
+                );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "Get order delivery address",
+            description = "Returns the historical delivery address snapshot for the authenticated user's order."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Order address retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User is not authenticated"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Order or snapshot address not found"
+            )
+    })
+    @GetMapping("/{orderId}/address")
+    public ResponseEntity<AddressResponseDto> getOrderAddress(
+            @PathVariable final String orderId,
+            @AuthenticationPrincipal final User user
+    ) {
+
+        log.info(
+                "Get order address request received. Order: {}, User: {}",
+                orderId,
+                user.getId()
+        );
+
+        final AddressResponseDto response =
+                orderService.getOrderAddress(
                         orderId,
                         user.getId()
                 );

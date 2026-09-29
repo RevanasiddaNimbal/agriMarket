@@ -13,7 +13,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { adminService } from '@/services/admin/adminService';
-import { addressService } from '@/services/address/addressService';
+import { orderService } from '@/services/order/orderService';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
@@ -47,9 +47,9 @@ export function AdminDeliveryDetailPage() {
         const orderRes = await adminService.getOrder(targetOrderId).catch(() => null);
         setOrder(orderRes);
 
-        const addrId = orderRes?.addressId || orderRes?.address_id;
-        if (addrId) {
-          const addrRes = await addressService.getAddress(addrId).catch(() => null);
+        const actualOrderId = orderRes?.id;
+        if (actualOrderId) {
+          const addrRes = await orderService.getOrderAddress(actualOrderId).catch(() => null);
           setAddress(addrRes);
         }
       }

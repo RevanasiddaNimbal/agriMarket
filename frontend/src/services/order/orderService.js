@@ -23,6 +23,11 @@ export const orderService = {
     return response.data;
   },
 
+  async getOrderAddress(orderId) {
+    const response = await apiClient.get(`/api/v1/orders/${orderId}/address`);
+    return response.data;
+  },
+
   // Update order status (for seller)
   async updateOrderStatus(orderId, status) {
     const response = await apiClient.patch(`/api/v1/orders/${orderId}/status`, {
