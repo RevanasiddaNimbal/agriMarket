@@ -17,7 +17,7 @@ public class OrderMapper {
         return OrderResponseDto.builder()
                 .id(order.getId())
                 .status(order.getStatus())
-                .totalAmount(order.getTotalAmount())
+                .totalAmount(order.calculateTotalAmount())
                 .addressId(
                         order.getAddressSnapshot() == null
                                 ? null

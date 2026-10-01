@@ -52,7 +52,6 @@ class OrderMapperTest {
 
         final Order order = Order.builder()
                 .status(OrderStatus.PENDING_PAYMENT)
-                .totalAmount(new BigDecimal("500.00"))
                 .addressSnapshot(snapshot)
                 .items(new ArrayList<>(List.of(orderItem)))
                 .build();
@@ -99,5 +98,48 @@ class OrderMapperTest {
 
         assertThat(list).hasSize(1);
         assertThat(list.get(0).getProductName()).isEqualTo("Rice");
+    }
+
+    @Test
+    void shouldCalculateOrderTotalFromMultipleOrderItemsUsingHistoricalUnitPrice() {
+        final Product product1 = Product.builder().id("prod-1").name("Wheat").price(new BigDecimal("999.00")).unit("KG").build();
+        final Product product2 = Product.builder().id("prod-2").name("Rice").price(new BigDecimal("888.00")).unit("KG").build();
+
+        final OrderItem item1 = OrderItem.builder()
+                .product(product1)
+                .quantity(new BigDecimal("10.00"))
+                .unitPrice(new BigDecimal("50.00"))
+                .subtotal(new BigDecimal("500.00"))
+                .build();
+
+        final OrderItem item2 = OrderItem.builder()
+                .product(product2)
+                .quantity(new BigDecimal("4.00"))
+                .unitPrice(new BigDecimal("25.00"))
+                .subtotal(new BigDecimal("100.00"))
+                .build();
+
+        final Order order = Order.builder()
+                .status(OrderStatus.CONFIRMED)
+                .items(new ArrayList<>(List.of(item1, item2)))
+                .build();
+        order.setId("order-multi");
+
+        final OrderResponseDto dto = orderMapper.toResponseDto(order);
+
+        assertThat(dto.getTotalAmount()).isEqualByComparingTo("600.00");
+    }
+
+    @Test
+    void shouldReturnZeroTotalWhenOrderHasNoItems() {
+        final Order order = Order.builder()
+                .status(OrderStatus.PENDING_PAYMENT)
+                .items(new ArrayList<>())
+                .build();
+        order.setId("order-empty");
+
+        final OrderResponseDto dto = orderMapper.toResponseDto(order);
+
+        assertThat(dto.getTotalAmount()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 }

@@ -89,20 +89,23 @@ public class PaymentServiceImpl implements PaymentService {
             );
         }
 
+        final BigDecimal totalAmount =
+                order.calculateTotalAmount();
+
         final PaymentProvider provider =
                 paymentProviderFactory.getProvider();
 
         final PaymentProviderResponse providerResponse =
                 provider.processPayment(
                         orderId,
-                        order.getTotalAmount(),
+                        totalAmount,
                         request.getPaymentMethod()
                 );
 
         final Payment payment =
                 Payment.builder()
                         .order(order)
-                        .amount(order.getTotalAmount())
+                        .amount(totalAmount)
                         .paymentMethod(request.getPaymentMethod())
                         .status(
                                 providerResponse.isSuccessful()
@@ -129,7 +132,7 @@ public class PaymentServiceImpl implements PaymentService {
                 PaymentTransaction.builder()
                         .payment(savedPayment)
                         .transactionType(TransactionType.PAYMENT)
-                        .amount(order.getTotalAmount())
+                        .amount(totalAmount)
                         .status(
                                 providerResponse.isSuccessful()
                                         ? PaymentStatus.SUCCESS
@@ -180,7 +183,7 @@ public class PaymentServiceImpl implements PaymentService {
         emailService.sendOrderConfirmationEmail(
                 order.getUser().getEmail(),
                 order.getId(),
-                order.getTotalAmount().toString()
+                totalAmount.toString()
         );
 
         for (final OrderItem orderItem : order.getItems()) {

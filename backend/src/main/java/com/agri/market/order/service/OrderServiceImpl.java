@@ -148,7 +148,6 @@ public class OrderServiceImpl implements OrderService {
                 Order.builder()
                         .user(user)
                         .status(OrderStatus.PENDING_PAYMENT)
-                        .totalAmount(subtotal)
                         .build();
 
         final OrderAddressSnapshot addressSnapshot =
@@ -415,7 +414,7 @@ public class OrderServiceImpl implements OrderService {
         return OrderTrackingResponseDto.builder()
                 .orderId(order.getId())
                 .status(order.getStatus())
-                .totalAmount(order.getTotalAmount())
+                .totalAmount(order.calculateTotalAmount())
                 .createdDate(order.getCreatedDate())
                 .delivery(deliveryResponse)
                 .build();
@@ -462,7 +461,7 @@ public class OrderServiceImpl implements OrderService {
             emailService.sendOrderCancellationEmail(
                     order.getUser().getEmail(),
                     order.getId(),
-                    order.getTotalAmount().toString()
+                    order.calculateTotalAmount().toString()
             );
 
             for (final OrderItem orderItem : order.getItems()) {

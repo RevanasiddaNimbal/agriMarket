@@ -471,12 +471,11 @@ class OrderServiceImplTest {
             final User farmer = User.builder().id("f1").email("farmer@mail.com").build();
 
             final Product product = Product.builder().id("p1").name("Rice").farmer(farmer).build();
-            final OrderItem item = OrderItem.builder().product(product).quantity(new BigDecimal("5.00")).build();
+            final OrderItem item = OrderItem.builder().product(product).quantity(new BigDecimal("5.00")).unitPrice(new BigDecimal("50.00")).build();
 
             final Order order = Order.builder()
                     .user(user)
                     .status(OrderStatus.PENDING_PAYMENT)
-                    .totalAmount(new BigDecimal("250.00"))
                     .items(new ArrayList<>(List.of(item)))
                     .build();
             order.setId(orderId);

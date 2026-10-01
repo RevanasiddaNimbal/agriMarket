@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,14 +60,6 @@ public class Order extends BaseEntity {
     @Builder.Default
     private OrderStatus status = OrderStatus.PENDING_PAYMENT;
 
-    @Column(
-            name = "total_amount",
-            nullable = false,
-            precision = 19,
-            scale = 2
-    )
-    private BigDecimal totalAmount;
-
     @OneToMany(
             mappedBy = "order",
             cascade = CascadeType.ALL,
@@ -74,4 +67,16 @@ public class Order extends BaseEntity {
     )
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
+
+    public BigDecimal calculateTotalAmount() {
+        if (items == null || items.isEmpty()) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        return items.stream()
+                .filter(item -> item != null && item.getQuantity() != null && item.getUnitPrice() != null)
+                .map(item -> item.getQuantity().multiply(item.getUnitPrice()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
 }

@@ -89,12 +89,11 @@ class PaymentServiceImplTest {
             final User user = User.builder().id(userId).email("user@mail.com").build();
             final User farmer = User.builder().id("farmer-1").email("farmer@mail.com").build();
             final Product product = Product.builder().id("prod-1").farmer(farmer).build();
-            final OrderItem item = OrderItem.builder().product(product).quantity(new BigDecimal("2.00")).build();
+            final OrderItem item = OrderItem.builder().product(product).quantity(new BigDecimal("2.00")).unitPrice(new BigDecimal("100.00")).build();
 
             final Order order = Order.builder()
                     .user(user)
                     .status(OrderStatus.PENDING_PAYMENT)
-                    .totalAmount(new BigDecimal("200.00"))
                     .items(new ArrayList<>(List.of(item)))
                     .build();
             order.setId(orderId);
@@ -121,7 +120,7 @@ class PaymentServiceImplTest {
             given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
             given(paymentRepository.existsByOrderId(orderId)).willReturn(false);
             given(paymentProviderFactory.getProvider()).willReturn(paymentProvider);
-            given(paymentProvider.processPayment(orderId, order.getTotalAmount(), PaymentMethod.UPI)).willReturn(providerResponse);
+            given(paymentProvider.processPayment(orderId, new BigDecimal("200.00"), PaymentMethod.UPI)).willReturn(providerResponse);
             given(paymentRepository.save(any(Payment.class))).willReturn(savedPayment);
             given(inventoryRepository.findByProductIdForUpdate("prod-1")).willReturn(Optional.of(inventory));
             given(paymentMapper.toResponseDto(savedPayment)).willReturn(responseDto);
@@ -143,12 +142,11 @@ class PaymentServiceImplTest {
             final String userId = "user-1";
             final User user = User.builder().id(userId).build();
             final Product product = Product.builder().id("prod-1").build();
-            final OrderItem item = OrderItem.builder().product(product).quantity(new BigDecimal("2.00")).build();
+            final OrderItem item = OrderItem.builder().product(product).quantity(new BigDecimal("2.00")).unitPrice(new BigDecimal("100.00")).build();
 
             final Order order = Order.builder()
                     .user(user)
                     .status(OrderStatus.PENDING_PAYMENT)
-                    .totalAmount(new BigDecimal("200.00"))
                     .items(new ArrayList<>(List.of(item)))
                     .build();
             order.setId(orderId);
@@ -172,7 +170,7 @@ class PaymentServiceImplTest {
             given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
             given(paymentRepository.existsByOrderId(orderId)).willReturn(false);
             given(paymentProviderFactory.getProvider()).willReturn(paymentProvider);
-            given(paymentProvider.processPayment(orderId, order.getTotalAmount(), PaymentMethod.UPI)).willReturn(providerResponse);
+            given(paymentProvider.processPayment(orderId, new BigDecimal("200.00"), PaymentMethod.UPI)).willReturn(providerResponse);
             given(paymentRepository.save(any(Payment.class))).willReturn(savedPayment);
             given(inventoryRepository.findByProductIdForUpdate("prod-1")).willReturn(Optional.of(inventory));
 
