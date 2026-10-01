@@ -74,8 +74,8 @@ public class Order extends BaseEntity {
         }
 
         return items.stream()
-                .filter(item -> item != null && item.getQuantity() != null && item.getUnitPrice() != null)
-                .map(item -> item.getQuantity().multiply(item.getUnitPrice()))
+                .filter(item -> item != null)
+                .map(OrderItem::calculateSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
     }

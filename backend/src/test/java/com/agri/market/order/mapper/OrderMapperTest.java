@@ -40,7 +40,6 @@ class OrderMapperTest {
                 .product(product)
                 .quantity(new BigDecimal("10.00"))
                 .unitPrice(new BigDecimal("50.00"))
-                .subtotal(new BigDecimal("500.00"))
                 .build();
         orderItem.setId("item-1");
 
@@ -90,7 +89,6 @@ class OrderMapperTest {
                 .product(product)
                 .quantity(new BigDecimal("5"))
                 .unitPrice(new BigDecimal("40"))
-                .subtotal(new BigDecimal("200"))
                 .build();
         item.setId("i-1");
 
@@ -109,14 +107,12 @@ class OrderMapperTest {
                 .product(product1)
                 .quantity(new BigDecimal("10.00"))
                 .unitPrice(new BigDecimal("50.00"))
-                .subtotal(new BigDecimal("500.00"))
                 .build();
 
         final OrderItem item2 = OrderItem.builder()
                 .product(product2)
                 .quantity(new BigDecimal("4.00"))
                 .unitPrice(new BigDecimal("25.00"))
-                .subtotal(new BigDecimal("100.00"))
                 .build();
 
         final Order order = Order.builder()

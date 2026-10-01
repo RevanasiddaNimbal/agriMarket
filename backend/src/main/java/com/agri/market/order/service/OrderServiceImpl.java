@@ -139,11 +139,6 @@ public class OrderServiceImpl implements OrderService {
         final BigDecimal unitPrice =
                 product.getPrice();
 
-        final BigDecimal subtotal =
-                unitPrice.multiply(
-                        request.getQuantity()
-                );
-
         final Order order =
                 Order.builder()
                         .user(user)
@@ -175,7 +170,6 @@ public class OrderServiceImpl implements OrderService {
                         .product(product)
                         .quantity(request.getQuantity())
                         .unitPrice(unitPrice)
-                        .subtotal(subtotal)
                         .build();
 
         order.getItems().add(orderItem);

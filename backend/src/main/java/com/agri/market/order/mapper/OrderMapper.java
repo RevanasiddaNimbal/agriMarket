@@ -43,7 +43,7 @@ public class OrderMapper {
                 .productName(orderItem.getProduct().getName())
                 .quantity(orderItem.getQuantity())
                 .unitPrice(orderItem.getUnitPrice())
-                .subtotal(orderItem.getSubtotal())
+                .subtotal(orderItem.calculateSubtotal())
                 .unit(orderItem.getProduct().getUnit())
                 .build();
     }

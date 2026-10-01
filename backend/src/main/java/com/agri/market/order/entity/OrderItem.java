@@ -60,11 +60,10 @@ public class OrderItem extends BaseEntity {
     )
     private BigDecimal unitPrice;
 
-    @Column(
-            name = "subtotal",
-            nullable = false,
-            precision = 19,
-            scale = 2
-    )
-    private BigDecimal subtotal;
+    public BigDecimal calculateSubtotal() {
+        if (quantity == null || unitPrice == null) {
+            return BigDecimal.ZERO.setScale(2, java.math.RoundingMode.HALF_UP);
+        }
+        return quantity.multiply(unitPrice).setScale(2, java.math.RoundingMode.HALF_UP);
+    }
 }
