@@ -123,6 +123,7 @@ export function CheckoutPage() {
   // Delivery & Payment selections
   const [selectedDeliveryId, setSelectedDeliveryId] = useState('STANDARD');
   const [selectedPaymentId, setSelectedPaymentId] = useState('UPI');
+  const [createdOrderId, setCreatedOrderId] = useState(null);
 
   // Loading States
   const [isLoading, setIsLoading] = useState(true);
@@ -357,6 +358,11 @@ export function CheckoutPage() {
 
   // Step 4 Final Place Order & Process Payment
   const handleFinalPlaceOrder = async () => {
+    if (createdOrderId) {
+      await handleProcessPayment();
+      return;
+    }
+
     if (!selectedAddressId) {
       toast.warning('Please select or specify a delivery address.');
       setCurrentStep(1);
@@ -365,30 +371,46 @@ export function CheckoutPage() {
 
     setIsProcessing(true);
     try {
-      // 1. Validate Checkout
       await checkoutService.validateCheckout({
         productId,
         quantity,
         addressId: selectedAddressId,
       });
 
-      // 2. Place Order
       const order = await orderService.placeOrder({
         productId,
         quantity,
         addressId: selectedAddressId,
       });
 
-      // 3. Process Payment
+      setCreatedOrderId(order.id);
+
+      toast.success('Order placed successfully. Stock has been reserved. Please complete payment.');
+    } catch (err) {
+      toast.error(err.message || 'Failed to place order. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleProcessPayment = async () => {
+    if (!createdOrderId) {
+      toast.warning('Please place the order before making payment.');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
       const chosenPayment = PAYMENT_OPTIONS.find((p) => p.id === selectedPaymentId);
       const backendMethod = chosenPayment?.backendMethod || 'MOCK';
 
-      await paymentService.processPayment(order.id, backendMethod);
+      await paymentService.processPayment(createdOrderId, backendMethod);
 
-      toast.success('Order placed and payment confirmed successfully!');
-      navigate(`/orders/${order.id}`);
+      toast.success('Payment completed and order confirmed successfully!');
+      navigate(`/orders/${createdOrderId}`);
     } catch (err) {
-      toast.error(err.message || 'Failed to place order. Please try again.');
+      setCreatedOrderId(null);
+      toast.error(err.message || 'Payment failed. Your reservation has been released.');
     } finally {
       setIsProcessing(false);
     }
@@ -442,19 +464,19 @@ export function CheckoutPage() {
               type="button"
               onClick={() => setCurrentStep(1)}
               className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-extrabold text-sm transition-all ${
-                currentStep > 1
-                  ? 'bg-brand-600 text-white shadow-soft-sm'
-                  : currentStep === 1
-                  ? 'bg-brand-600 text-white ring-4 ring-brand-100 shadow-soft-sm'
-                  : 'bg-white border-2 border-slate-300 text-slate-400'
-              }`}
+    currentStep > 1
+        ? 'bg-brand-600 text-white shadow-soft-sm'
+        : currentStep === 1
+            ? 'bg-brand-600 text-white ring-4 ring-brand-100 shadow-soft-sm'
+            : 'bg-white border-2 border-slate-300 text-slate-400'
+}`}
             >
               {currentStep > 1 ? <Check className="w-5 h-5 stroke-[3]" /> : '1'}
             </button>
             <span
               className={`text-xs mt-2 font-bold ${
-                currentStep >= 1 ? 'text-brand-700' : 'text-slate-400'
-              }`}
+    currentStep >= 1 ? 'text-brand-700' : 'text-slate-400'
+}`}
             >
               Address
             </span>
@@ -463,8 +485,8 @@ export function CheckoutPage() {
           {/* Line 1 -> 2 */}
           <div
             className={`flex-1 h-0.5 mx-2 -mt-5 transition-colors ${
-              currentStep > 1 ? 'bg-brand-600' : 'bg-slate-200'
-            }`}
+    currentStep > 1 ? 'bg-brand-600' : 'bg-slate-200'
+}`}
           />
 
           {/* Step 2: Delivery */}
@@ -474,19 +496,19 @@ export function CheckoutPage() {
               onClick={() => currentStep > 2 && setCurrentStep(2)}
               disabled={currentStep < 2}
               className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-extrabold text-sm transition-all ${
-                currentStep > 2
-                  ? 'bg-brand-600 text-white shadow-soft-sm'
-                  : currentStep === 2
-                  ? 'bg-brand-600 text-white ring-4 ring-brand-100 shadow-soft-sm'
-                  : 'bg-white border-2 border-slate-300 text-slate-400'
-              }`}
+    currentStep > 2
+        ? 'bg-brand-600 text-white shadow-soft-sm'
+        : currentStep === 2
+            ? 'bg-brand-600 text-white ring-4 ring-brand-100 shadow-soft-sm'
+            : 'bg-white border-2 border-slate-300 text-slate-400'
+}`}
             >
               {currentStep > 2 ? <Check className="w-5 h-5 stroke-[3]" /> : '2'}
             </button>
             <span
               className={`text-xs mt-2 font-bold ${
-                currentStep >= 2 ? 'text-brand-700' : 'text-slate-400'
-              }`}
+    currentStep >= 2 ? 'text-brand-700' : 'text-slate-400'
+}`}
             >
               Delivery
             </span>
@@ -495,8 +517,8 @@ export function CheckoutPage() {
           {/* Line 2 -> 3 */}
           <div
             className={`flex-1 h-0.5 mx-2 -mt-5 transition-colors ${
-              currentStep > 2 ? 'bg-brand-600' : 'bg-slate-200'
-            }`}
+    currentStep > 2 ? 'bg-brand-600' : 'bg-slate-200'
+}`}
           />
 
           {/* Step 3: Payment */}
@@ -506,19 +528,19 @@ export function CheckoutPage() {
               onClick={() => currentStep > 3 && setCurrentStep(3)}
               disabled={currentStep < 3}
               className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-extrabold text-sm transition-all ${
-                currentStep > 3
-                  ? 'bg-brand-600 text-white shadow-soft-sm'
-                  : currentStep === 3
-                  ? 'bg-brand-600 text-white ring-4 ring-brand-100 shadow-soft-sm'
-                  : 'bg-white border-2 border-slate-300 text-slate-400'
-              }`}
+    currentStep > 3
+        ? 'bg-brand-600 text-white shadow-soft-sm'
+        : currentStep === 3
+            ? 'bg-brand-600 text-white ring-4 ring-brand-100 shadow-soft-sm'
+            : 'bg-white border-2 border-slate-300 text-slate-400'
+}`}
             >
               {currentStep > 3 ? <Check className="w-5 h-5 stroke-[3]" /> : '3'}
             </button>
             <span
               className={`text-xs mt-2 font-bold ${
-                currentStep >= 3 ? 'text-brand-700' : 'text-slate-400'
-              }`}
+    currentStep >= 3 ? 'text-brand-700' : 'text-slate-400'
+}`}
             >
               Payment
             </span>
@@ -527,8 +549,8 @@ export function CheckoutPage() {
           {/* Line 3 -> 4 */}
           <div
             className={`flex-1 h-0.5 mx-2 -mt-5 transition-colors ${
-              currentStep > 3 ? 'bg-brand-600' : 'bg-slate-200'
-            }`}
+    currentStep > 3 ? 'bg-brand-600' : 'bg-slate-200'
+}`}
           />
 
           {/* Step 4: Review */}
@@ -537,17 +559,17 @@ export function CheckoutPage() {
               type="button"
               disabled={currentStep < 4}
               className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-extrabold text-sm transition-all ${
-                currentStep === 4
-                  ? 'bg-brand-600 text-white ring-4 ring-brand-100 shadow-soft-sm'
-                  : 'bg-white border-2 border-slate-300 text-slate-400'
-              }`}
+    currentStep === 4
+        ? 'bg-brand-600 text-white ring-4 ring-brand-100 shadow-soft-sm'
+        : 'bg-white border-2 border-slate-300 text-slate-400'
+}`}
             >
               4
             </button>
             <span
               className={`text-xs mt-2 font-bold ${
-                currentStep === 4 ? 'text-brand-700' : 'text-slate-400'
-              }`}
+    currentStep === 4 ? 'text-brand-700' : 'text-slate-400'
+}`}
             >
               Review
             </span>
@@ -629,10 +651,10 @@ export function CheckoutPage() {
                           key={addr.id}
                           onClick={() => setSelectedAddressId(addr.id)}
                           className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start justify-between gap-3 ${
-                            isSelected
-                              ? 'border-brand-600 bg-brand-50/50 ring-2 ring-brand-100 shadow-soft-sm'
-                              : 'border-slate-200 hover:border-slate-300'
-                          }`}
+    isSelected
+        ? 'border-brand-600 bg-brand-50/50 ring-2 ring-brand-100 shadow-soft-sm'
+        : 'border-slate-200 hover:border-slate-300'
+}`}
                         >
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
@@ -656,10 +678,10 @@ export function CheckoutPage() {
 
                           <div
                             className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 mt-1 ${
-                              isSelected
-                                ? 'border-brand-600 bg-brand-600 text-white'
-                                : 'border-slate-300'
-                            }`}
+    isSelected
+        ? 'border-brand-600 bg-brand-600 text-white'
+        : 'border-slate-300'
+}`}
                           >
                             {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                           </div>
@@ -810,10 +832,10 @@ export function CheckoutPage() {
                       key={opt.id}
                       onClick={() => setSelectedDeliveryId(opt.id)}
                       className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 ${
-                        isSelected
-                          ? 'border-brand-600 bg-brand-50/40 ring-2 ring-brand-100 shadow-soft-sm'
-                          : 'border-slate-200 hover:border-slate-300 bg-white'
-                      }`}
+    isSelected
+        ? 'border-brand-600 bg-brand-50/40 ring-2 ring-brand-100 shadow-soft-sm'
+        : 'border-slate-200 hover:border-slate-300 bg-white'
+}`}
                     >
                       <div className="space-y-0.5">
                         <h3 className="text-sm font-bold text-slate-900">{opt.title}</h3>
@@ -823,17 +845,17 @@ export function CheckoutPage() {
                       <div className="flex items-center gap-3">
                         <span
                           className={`text-sm font-extrabold ${
-                            opt.price === 0 ? 'text-brand-700' : 'text-slate-900'
-                          }`}
+    opt.price === 0 ? 'text-brand-700' : 'text-slate-900'
+}`}
                         >
                           {opt.priceLabel}
                         </span>
                         <div
                           className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
-                            isSelected
-                              ? 'border-brand-600 bg-brand-600 text-white'
-                              : 'border-slate-300'
-                          }`}
+    isSelected
+        ? 'border-brand-600 bg-brand-600 text-white'
+        : 'border-slate-300'
+}`}
                         >
                           {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                         </div>
@@ -897,18 +919,18 @@ export function CheckoutPage() {
                       key={opt.id}
                       onClick={() => setSelectedPaymentId(opt.id)}
                       className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 ${
-                        isSelected
-                          ? 'border-brand-600 bg-brand-50/40 ring-2 ring-brand-100 shadow-soft-sm'
-                          : 'border-slate-200 hover:border-slate-300 bg-white'
-                      }`}
+    isSelected
+        ? 'border-brand-600 bg-brand-50/40 ring-2 ring-brand-100 shadow-soft-sm'
+        : 'border-slate-200 hover:border-slate-300 bg-white'
+}`}
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                            isSelected
-                              ? 'bg-brand-100 text-brand-700'
-                              : 'bg-slate-100 text-slate-500'
-                          }`}
+    isSelected
+        ? 'bg-brand-100 text-brand-700'
+        : 'bg-slate-100 text-slate-500'
+}`}
                         >
                           <IconComp className="w-5 h-5" />
                         </div>
@@ -922,10 +944,10 @@ export function CheckoutPage() {
 
                       <div
                         className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
-                          isSelected
-                            ? 'border-brand-600 bg-brand-600 text-white'
-                            : 'border-slate-300'
-                        }`}
+    isSelected
+        ? 'border-brand-600 bg-brand-600 text-white'
+        : 'border-slate-300'
+}`}
                       >
                         {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                       </div>
@@ -1086,7 +1108,7 @@ export function CheckoutPage() {
                   isLoading={isProcessing}
                   className="px-10 py-3.5 text-base font-extrabold bg-brand-600 hover:bg-brand-700 shadow-soft-md"
                 >
-                  Place Order
+                  <span>{createdOrderId ? 'Pay Now' : 'Place Order'}</span>
                 </Button>
               </div>
             </div>

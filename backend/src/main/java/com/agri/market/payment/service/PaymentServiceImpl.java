@@ -382,10 +382,10 @@ public class PaymentServiceImpl implements PaymentService {
                                     )
                             );
 
-            final BigDecimal productQuantity =
-                    product.getQuantity() == null
+            final BigDecimal totalQuantity =
+                    inventory.getTotalQuantity() == null
                             ? BigDecimal.ZERO
-                            : product.getQuantity();
+                            : inventory.getTotalQuantity();
 
             final BigDecimal reservedQuantity =
                     inventory.getReservedQuantity() == null
@@ -401,7 +401,7 @@ public class PaymentServiceImpl implements PaymentService {
                 );
             }
 
-            if (productQuantity.compareTo(
+            if (totalQuantity.compareTo(
                     orderItem.getQuantity()
             ) < 0) {
 
@@ -410,8 +410,8 @@ public class PaymentServiceImpl implements PaymentService {
                 );
             }
 
-            product.setQuantity(
-                    productQuantity.subtract(
+            inventory.setTotalQuantity(
+                    totalQuantity.subtract(
                             orderItem.getQuantity()
                     )
             );
@@ -437,9 +437,9 @@ public class PaymentServiceImpl implements PaymentService {
                                     orderItem.getProduct().getId()
                             )
                             .orElseThrow(() ->
-                                    new BusinessException(
-                                            ErrorCode.INVENTORY_NOT_FOUND
-                                    )
+                                     new BusinessException(
+                                             ErrorCode.INVENTORY_NOT_FOUND
+                                     )
                             );
 
             final BigDecimal reservedQuantity =
@@ -485,16 +485,16 @@ public class PaymentServiceImpl implements PaymentService {
                             .orElseThrow(() ->
                                     new BusinessException(
                                             ErrorCode.INVENTORY_NOT_FOUND
-                                    )
+                                     )
                             );
 
-            final BigDecimal productQuantity =
-                    product.getQuantity() == null
+            final BigDecimal totalQuantity =
+                    inventory.getTotalQuantity() == null
                             ? BigDecimal.ZERO
-                            : product.getQuantity();
+                            : inventory.getTotalQuantity();
 
-            product.setQuantity(
-                    productQuantity.add(
+            inventory.setTotalQuantity(
+                    totalQuantity.add(
                             orderItem.getQuantity()
                     )
             );

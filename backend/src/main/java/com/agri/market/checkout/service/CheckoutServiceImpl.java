@@ -87,10 +87,10 @@ public class CheckoutServiceImpl implements CheckoutService {
                             );
                         });
 
-        final BigDecimal productQuantity =
-                product.getQuantity() == null
+        final BigDecimal totalQuantity =
+                inventory.getTotalQuantity() == null
                         ? BigDecimal.ZERO
-                        : product.getQuantity();
+                        : inventory.getTotalQuantity();
 
         final BigDecimal reservedQuantity =
                 inventory.getReservedQuantity() == null
@@ -98,7 +98,7 @@ public class CheckoutServiceImpl implements CheckoutService {
                         : inventory.getReservedQuantity();
 
         final BigDecimal availableQuantity =
-                productQuantity.subtract(reservedQuantity);
+                totalQuantity.subtract(reservedQuantity);
 
         if (request.getQuantity().compareTo(availableQuantity) > 0) {
 

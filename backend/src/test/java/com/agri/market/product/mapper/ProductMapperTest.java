@@ -1,6 +1,8 @@
 package com.agri.market.product.mapper;
 
 import com.agri.market.category.entity.Category;
+import com.agri.market.inventory.entity.Inventory;
+import com.agri.market.inventory.repository.InventoryRepository;
 import com.agri.market.product.dto.ProductImageResponseDto;
 import com.agri.market.product.dto.ProductResponseDto;
 import com.agri.market.product.entity.Product;
@@ -17,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -30,6 +33,9 @@ class ProductMapperTest {
 
     @Mock
     private ProductImageMapper productImageMapper;
+
+    @Mock
+    private InventoryRepository inventoryRepository;
 
     @InjectMocks
     private ProductMapper productMapper;
@@ -58,9 +64,14 @@ class ProductMapperTest {
                     .description("High yield wheat")
                     .price(new BigDecimal("100.00"))
                     .unit("KG")
-                    .quantity(new BigDecimal("50.00"))
                     .location("Karnataka")
                     .status("ACTIVE")
+                    .build();
+
+            final Inventory inventory = Inventory.builder()
+                    .product(product)
+                    .totalQuantity(new BigDecimal("50.00"))
+                    .reservedQuantity(BigDecimal.ZERO)
                     .build();
 
             final ProductImage image = ProductImage.builder()
@@ -82,6 +93,7 @@ class ProductMapperTest {
             given(productImageRepository.findAllByProduct_IdOrderByDisplayOrderAsc("prod-1"))
                     .willReturn(List.of(image));
             given(productImageMapper.toResponseDto(image)).willReturn(imageDto);
+            given(inventoryRepository.findByProductId("prod-1")).willReturn(Optional.of(inventory));
 
             final ProductResponseDto dto = productMapper.toResponseDto(product);
 
@@ -93,7 +105,29 @@ class ProductMapperTest {
             assertThat(dto.getCategoryName()).isEqualTo("Seeds");
             assertThat(dto.getName()).isEqualTo("Wheat");
             assertThat(dto.getPrice()).isEqualByComparingTo("100.00");
+            assertThat(dto.getQuantity()).isEqualByComparingTo("50.00");
             assertThat(dto.getImages()).containsExactly(imageDto);
+        }
+
+        @Test
+        void shouldCalculateAvailableQuantityWhenReservedIsNonZero() {
+            final Product product = Product.builder()
+                    .id("prod-1")
+                    .build();
+
+            final Inventory inventory = Inventory.builder()
+                    .product(product)
+                    .totalQuantity(new BigDecimal("65.00"))
+                    .reservedQuantity(new BigDecimal("10.00"))
+                    .build();
+
+            given(productImageRepository.findAllByProduct_IdOrderByDisplayOrderAsc("prod-1"))
+                    .willReturn(List.of());
+            given(inventoryRepository.findByProductId("prod-1")).willReturn(Optional.of(inventory));
+
+            final ProductResponseDto dto = productMapper.toResponseDto(product);
+
+            assertThat(dto.getQuantity()).isEqualByComparingTo("55.00");
         }
 
         @Test
@@ -107,6 +141,7 @@ class ProductMapperTest {
 
             given(productImageRepository.findAllByProduct_IdOrderByDisplayOrderAsc("prod-2"))
                     .willReturn(List.of());
+            given(inventoryRepository.findByProductId("prod-2")).willReturn(Optional.empty());
 
             final ProductResponseDto dto = productMapper.toResponseDto(product);
 

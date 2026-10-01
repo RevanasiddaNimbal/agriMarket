@@ -45,6 +45,15 @@ public class Inventory {
     private Product product;
 
     @Column(
+            name = "total_quantity",
+            nullable = false,
+            precision = 19,
+            scale = 3
+    )
+    @Builder.Default
+    private BigDecimal totalQuantity = BigDecimal.ZERO;
+
+    @Column(
             name = "reserved_quantity",
             nullable = false,
             precision = 19,
@@ -67,6 +76,10 @@ public class Inventory {
     protected void onCreate() {
         if (id == null) {
             id = UUID.randomUUID().toString();
+        }
+
+        if (totalQuantity == null) {
+            totalQuantity = BigDecimal.ZERO;
         }
 
         if (reservedQuantity == null) {

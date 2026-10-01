@@ -103,7 +103,6 @@ class OrderServiceImplTest {
                     .id(productId)
                     .status(ProductStatus.ACTIVE.name())
                     .price(new BigDecimal("100.00"))
-                    .quantity(new BigDecimal("20.00"))
                     .build();
 
             final Address address = Address.builder()
@@ -114,6 +113,7 @@ class OrderServiceImplTest {
 
             final Inventory inventory = Inventory.builder()
                     .product(product)
+                    .totalQuantity(new BigDecimal("20.00"))
                     .reservedQuantity(new BigDecimal("2.00"))
                     .build();
 
@@ -131,7 +131,10 @@ class OrderServiceImplTest {
             final OrderResponseDto result = orderService.placeOrder(request, userId);
 
             assertThat(result).isSameAs(responseDto);
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("20.00");
             assertThat(inventory.getReservedQuantity()).isEqualByComparingTo("7.00");
+            assertThat(inventory.getTotalQuantity().subtract(inventory.getReservedQuantity()))
+                    .isEqualByComparingTo("13.00");
             then(inventoryRepository).should().save(inventory);
             then(orderRepository).should().save(any(Order.class));
         }
@@ -152,12 +155,14 @@ class OrderServiceImplTest {
                     .id(productId)
                     .status(ProductStatus.ACTIVE.name())
                     .price(new BigDecimal("100.00"))
-                    .quantity(new BigDecimal("20.00"))
                     .build();
 
             final Address address = Address.builder().build();
             address.setId(addressId);
-            final Inventory inventory = Inventory.builder().reservedQuantity(BigDecimal.ZERO).build();
+            final Inventory inventory = Inventory.builder()
+                    .totalQuantity(new BigDecimal("20.00"))
+                    .reservedQuantity(BigDecimal.ZERO)
+                    .build();
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
             given(productRepository.findById(productId)).willReturn(Optional.of(product));
@@ -168,6 +173,147 @@ class OrderServiceImplTest {
                     .isInstanceOf(BusinessException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.INVENTORY_INSUFFICIENT_STOCK);
+
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("20.00");
+            assertThat(inventory.getReservedQuantity()).isEqualByComparingTo(BigDecimal.ZERO);
+        }
+
+        @Test
+        void shouldRejectOrderWhenStockIsFullyReserved() {
+            final String userId = "user-1";
+            final String productId = "prod-1";
+            final String addressId = "addr-1";
+
+            final PlaceOrderRequestDto request = new PlaceOrderRequestDto();
+            request.setProductId(productId);
+            request.setAddressId(addressId);
+            request.setQuantity(new BigDecimal("1.00"));
+
+            final User user = User.builder().id(userId).build();
+            final Product product = Product.builder()
+                    .id(productId)
+                    .status(ProductStatus.ACTIVE.name())
+                    .price(new BigDecimal("100.00"))
+                    .build();
+
+            final Address address = Address.builder().build();
+            address.setId(addressId);
+            final Inventory inventory = Inventory.builder()
+                    .totalQuantity(new BigDecimal("65.00"))
+                    .reservedQuantity(new BigDecimal("65.00"))
+                    .build();
+
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(productRepository.findById(productId)).willReturn(Optional.of(product));
+            given(addressRepository.findByIdAndUserId(addressId, userId)).willReturn(Optional.of(address));
+            given(inventoryRepository.findByProductIdForUpdate(productId)).willReturn(Optional.of(inventory));
+
+            assertThatThrownBy(() -> orderService.placeOrder(request, userId))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.INVENTORY_INSUFFICIENT_STOCK);
+
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("65.00");
+            assertThat(inventory.getReservedQuantity()).isEqualByComparingTo("65.00");
+            assertThat(inventory.getTotalQuantity().subtract(inventory.getReservedQuantity()))
+                    .isEqualByComparingTo("0.00");
+        }
+
+        @Test
+        void shouldAccumulateMultipleReservationsWithoutModifyingTotalQuantity() {
+            final String userId = "user-1";
+            final String productId = "prod-1";
+            final String addressId = "addr-1";
+
+            final PlaceOrderRequestDto request1 = new PlaceOrderRequestDto();
+            request1.setProductId(productId);
+            request1.setAddressId(addressId);
+            request1.setQuantity(new BigDecimal("5.00"));
+
+            final PlaceOrderRequestDto request2 = new PlaceOrderRequestDto();
+            request2.setProductId(productId);
+            request2.setAddressId(addressId);
+            request2.setQuantity(new BigDecimal("4.00"));
+
+            final User user = User.builder().id(userId).build();
+            final Product product = Product.builder()
+                    .id(productId)
+                    .status(ProductStatus.ACTIVE.name())
+                    .price(new BigDecimal("100.00"))
+                    .build();
+
+            final Address address = Address.builder().addressLine1("123 Farm Way").city("Hubli").build();
+            address.setId(addressId);
+
+            final Inventory inventory = Inventory.builder()
+                    .product(product)
+                    .totalQuantity(new BigDecimal("20.00"))
+                    .reservedQuantity(new BigDecimal("2.00"))
+                    .build();
+
+            final Order savedOrder = Order.builder().build();
+            savedOrder.setId("order-100");
+            final OrderResponseDto responseDto = OrderResponseDto.builder().id("order-100").build();
+
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(productRepository.findById(productId)).willReturn(Optional.of(product));
+            given(addressRepository.findByIdAndUserId(addressId, userId)).willReturn(Optional.of(address));
+            given(inventoryRepository.findByProductIdForUpdate(productId)).willReturn(Optional.of(inventory));
+            given(orderRepository.save(any(Order.class))).willReturn(savedOrder);
+            given(orderMapper.toResponseDto(savedOrder)).willReturn(responseDto);
+
+            orderService.placeOrder(request1, userId);
+
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("20.00");
+            assertThat(inventory.getReservedQuantity()).isEqualByComparingTo("7.00");
+            assertThat(inventory.getTotalQuantity().subtract(inventory.getReservedQuantity()))
+                    .isEqualByComparingTo("13.00");
+
+            orderService.placeOrder(request2, userId);
+
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("20.00");
+            assertThat(inventory.getReservedQuantity()).isEqualByComparingTo("11.00");
+            assertThat(inventory.getTotalQuantity().subtract(inventory.getReservedQuantity()))
+                    .isEqualByComparingTo("9.00");
+        }
+
+        @Test
+        void shouldPropagateOptimisticLockExceptionWhenConcurrentUpdateDetected() {
+            final String userId = "user-1";
+            final String productId = "prod-1";
+            final String addressId = "addr-1";
+
+            final PlaceOrderRequestDto request = new PlaceOrderRequestDto();
+            request.setProductId(productId);
+            request.setAddressId(addressId);
+            request.setQuantity(new BigDecimal("5.00"));
+
+            final User user = User.builder().id(userId).build();
+            final Product product = Product.builder()
+                    .id(productId)
+                    .status(ProductStatus.ACTIVE.name())
+                    .price(new BigDecimal("100.00"))
+                    .build();
+
+            final Address address = Address.builder().build();
+            address.setId(addressId);
+
+            final Inventory inventory = Inventory.builder()
+                    .product(product)
+                    .totalQuantity(new BigDecimal("20.00"))
+                    .reservedQuantity(BigDecimal.ZERO)
+                    .version(1L)
+                    .build();
+
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(productRepository.findById(productId)).willReturn(Optional.of(product));
+            given(addressRepository.findByIdAndUserId(addressId, userId)).willReturn(Optional.of(address));
+            given(inventoryRepository.findByProductIdForUpdate(productId)).willReturn(Optional.of(inventory));
+            given(inventoryRepository.save(inventory))
+                    .willThrow(new org.springframework.orm.ObjectOptimisticLockingFailureException(Inventory.class, "inv-1"));
+
+            assertThatThrownBy(() -> orderService.placeOrder(request, userId))
+                    .isInstanceOf(org.springframework.orm.ObjectOptimisticLockingFailureException.class);
         }
 
         @Test
@@ -336,6 +482,7 @@ class OrderServiceImplTest {
             order.setId(orderId);
 
             final Inventory inventory = Inventory.builder()
+                    .totalQuantity(new BigDecimal("20.00"))
                     .reservedQuantity(new BigDecimal("5.00"))
                     .build();
 
@@ -345,7 +492,10 @@ class OrderServiceImplTest {
             orderService.cancelOrder(orderId, userId);
 
             assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("20.00");
             assertThat(inventory.getReservedQuantity()).isEqualByComparingTo("0.00");
+            assertThat(inventory.getTotalQuantity().subtract(inventory.getReservedQuantity()))
+                    .isEqualByComparingTo("20.00");
             then(inventoryRepository).should().save(inventory);
             then(emailService).should().sendOrderCancellationEmail(user.getEmail(), orderId, "250.00");
         }

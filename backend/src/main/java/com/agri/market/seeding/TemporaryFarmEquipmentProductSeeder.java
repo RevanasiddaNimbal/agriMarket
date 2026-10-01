@@ -293,7 +293,6 @@ public class TemporaryFarmEquipmentProductSeeder {
                             .description(equipmentData.description())
                             .price(equipmentData.price())
                             .unit(equipmentData.unit())
-                            .quantity(equipmentData.quantity())
                             .location(equipmentData.location())
                             .status("ACTIVE")
                             .build();
@@ -314,6 +313,7 @@ public class TemporaryFarmEquipmentProductSeeder {
             final Inventory inventory =
                     Inventory.builder()
                             .product(savedProduct)
+                            .totalQuantity(equipmentData.quantity())
                             .reservedQuantity(BigDecimal.ZERO)
                             .build();
 

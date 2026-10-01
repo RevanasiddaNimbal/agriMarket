@@ -1,6 +1,7 @@
 package com.agri.market.product.mapper;
 
 import com.agri.market.category.entity.Category;
+import com.agri.market.inventory.repository.InventoryRepository;
 import com.agri.market.product.dto.ProductResponseDto;
 import com.agri.market.product.entity.Product;
 import com.agri.market.product.repository.ProductImageRepository;
@@ -9,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -16,6 +19,7 @@ public class ProductMapper {
 
     private final ProductImageRepository productImageRepository;
     private final ProductImageMapper productImageMapper;
+    private final InventoryRepository inventoryRepository;
 
     public ProductResponseDto toResponseDto(
             final Product product
@@ -37,6 +41,16 @@ public class ProductMapper {
                         .stream()
                         .map(productImageMapper::toResponseDto)
                         .toList();
+
+        final BigDecimal quantity = product.getId() != null
+                ? inventoryRepository.findByProductId(product.getId())
+                        .map(inv -> {
+                            final BigDecimal total = inv.getTotalQuantity() != null ? inv.getTotalQuantity() : BigDecimal.ZERO;
+                            final BigDecimal reserved = inv.getReservedQuantity() != null ? inv.getReservedQuantity() : BigDecimal.ZERO;
+                            return total.subtract(reserved);
+                        })
+                        .orElse(BigDecimal.ZERO)
+                : BigDecimal.ZERO;
 
         return ProductResponseDto.builder()
                 .id(product.getId())
@@ -64,7 +78,7 @@ public class ProductMapper {
                 .description(product.getDescription())
                 .price(product.getPrice())
                 .unit(product.getUnit())
-                .quantity(product.getQuantity())
+                .quantity(quantity)
                 .location(product.getLocation())
                 .status(product.getStatus())
                 .images(images)

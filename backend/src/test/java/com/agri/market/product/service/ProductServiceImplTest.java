@@ -94,6 +94,7 @@ class ProductServiceImplTest {
             then(inventoryRepository).should().save(inventoryCaptor.capture());
             final Inventory savedInventory = inventoryCaptor.getValue();
             assertThat(savedInventory.getProduct()).isEqualTo(savedProduct);
+            assertThat(savedInventory.getTotalQuantity()).isEqualTo(new BigDecimal("100.00"));
             assertThat(savedInventory.getReservedQuantity()).isEqualTo(BigDecimal.ZERO);
         }
 
@@ -161,6 +162,7 @@ class ProductServiceImplTest {
 
         @Test
         void shouldThrowExceptionWhenProductNotFound() {
+            final ProductRequestDto request = createSampleRequest();
             given(productRepository.findById("p1")).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> productService.getProductById("p1"))
@@ -202,10 +204,12 @@ class ProductServiceImplTest {
             final Product existingProduct = Product.builder().id(prodId).build();
             final Product updatedProduct = Product.builder().id(prodId).name("Organic Fertilizer").build();
             final ProductResponseDto dto = ProductResponseDto.builder().id(prodId).name("Organic Fertilizer").build();
+            final Inventory existingInventory = Inventory.builder().id("inv-1").product(existingProduct).build();
 
             given(productRepository.findByIdAndFarmer_Id(prodId, userId)).willReturn(Optional.of(existingProduct));
             given(categoryRepository.findById("cat-1")).willReturn(Optional.of(category));
             given(productRepository.save(existingProduct)).willReturn(updatedProduct);
+            given(inventoryRepository.findByProductId(prodId)).willReturn(Optional.of(existingInventory));
             given(productMapper.toResponseDto(updatedProduct)).willReturn(dto);
 
             final ProductResponseDto result = productService.updateProduct(prodId, request, userId);
@@ -213,6 +217,8 @@ class ProductServiceImplTest {
             assertThat(result).isSameAs(dto);
             assertThat(existingProduct.getName()).isEqualTo("Organic Fertilizer");
             assertThat(existingProduct.getCategory()).isEqualTo(category);
+            assertThat(existingInventory.getTotalQuantity()).isEqualTo(new BigDecimal("100.00"));
+            then(inventoryRepository).should().save(existingInventory);
         }
 
         @Test

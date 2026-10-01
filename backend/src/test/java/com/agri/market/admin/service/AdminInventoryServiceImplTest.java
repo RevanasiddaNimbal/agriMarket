@@ -34,9 +34,6 @@ class AdminInventoryServiceImplTest {
     private InventoryRepository inventoryRepository;
 
     @Mock
-    private ProductRepository productRepository;
-
-    @Mock
     private InventoryMapper inventoryMapper;
 
     @InjectMocks
@@ -76,21 +73,22 @@ class AdminInventoryServiceImplTest {
 
         @Test
         void shouldUpdateInventorySuccessfully() {
-            final Product product = Product.builder().id("p1").quantity(new BigDecimal("50")).build();
-            final Inventory inventory = Inventory.builder().id("inv-1").product(product).reservedQuantity(new BigDecimal("10")).build();
+            final Product product = Product.builder().id("p1").build();
+            final Inventory inventory = Inventory.builder().id("inv-1").product(product).totalQuantity(new BigDecimal("50")).reservedQuantity(new BigDecimal("10")).build();
             final InventoryUpdateRequestDto request = new InventoryUpdateRequestDto();
             request.setQuantity(new BigDecimal("100"));
 
             final InventoryResponseDto dto = InventoryResponseDto.builder().build();
 
             given(inventoryRepository.findByProductIdForUpdate("p1")).willReturn(Optional.of(inventory));
+            given(inventoryRepository.save(inventory)).willReturn(inventory);
             given(inventoryMapper.toResponseDto(inventory)).willReturn(dto);
 
             final InventoryResponseDto result = adminInventoryService.updateInventory("p1", request);
 
             assertThat(result).isSameAs(dto);
-            assertThat(product.getQuantity()).isEqualByComparingTo("100");
-            then(productRepository).should().save(product);
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("100");
+            then(inventoryRepository).should().save(inventory);
         }
     }
 
@@ -100,38 +98,42 @@ class AdminInventoryServiceImplTest {
 
         @Test
         void shouldAddStockSuccessfully() {
-            final Product product = Product.builder().id("p1").quantity(new BigDecimal("50")).build();
-            final Inventory inventory = Inventory.builder().id("inv-1").product(product).build();
+            final Product product = Product.builder().id("p1").build();
+            final Inventory inventory = Inventory.builder().id("inv-1").product(product).totalQuantity(new BigDecimal("50")).build();
             final StockAdjustmentRequestDto request = new StockAdjustmentRequestDto();
             request.setQuantity(new BigDecimal("20"));
 
             final InventoryResponseDto dto = InventoryResponseDto.builder().build();
 
             given(inventoryRepository.findByProductIdForUpdate("p1")).willReturn(Optional.of(inventory));
+            given(inventoryRepository.save(inventory)).willReturn(inventory);
             given(inventoryMapper.toResponseDto(inventory)).willReturn(dto);
 
             final InventoryResponseDto result = adminInventoryService.addStock("p1", request);
 
             assertThat(result).isSameAs(dto);
-            assertThat(product.getQuantity()).isEqualByComparingTo("70");
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("70");
+            then(inventoryRepository).should().save(inventory);
         }
 
         @Test
         void shouldRemoveStockSuccessfully() {
-            final Product product = Product.builder().id("p1").quantity(new BigDecimal("50")).build();
-            final Inventory inventory = Inventory.builder().id("inv-1").product(product).reservedQuantity(new BigDecimal("10")).build();
+            final Product product = Product.builder().id("p1").build();
+            final Inventory inventory = Inventory.builder().id("inv-1").product(product).totalQuantity(new BigDecimal("50")).reservedQuantity(new BigDecimal("10")).build();
             final StockAdjustmentRequestDto request = new StockAdjustmentRequestDto();
             request.setQuantity(new BigDecimal("20"));
 
             final InventoryResponseDto dto = InventoryResponseDto.builder().build();
 
             given(inventoryRepository.findByProductIdForUpdate("p1")).willReturn(Optional.of(inventory));
+            given(inventoryRepository.save(inventory)).willReturn(inventory);
             given(inventoryMapper.toResponseDto(inventory)).willReturn(dto);
 
             final InventoryResponseDto result = adminInventoryService.removeStock("p1", request);
 
             assertThat(result).isSameAs(dto);
-            assertThat(product.getQuantity()).isEqualByComparingTo("30");
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("30");
+            then(inventoryRepository).should().save(inventory);
         }
     }
 }

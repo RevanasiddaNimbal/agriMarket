@@ -88,7 +88,7 @@ class PaymentServiceImplTest {
             final String userId = "user-1";
             final User user = User.builder().id(userId).email("user@mail.com").build();
             final User farmer = User.builder().id("farmer-1").email("farmer@mail.com").build();
-            final Product product = Product.builder().id("prod-1").farmer(farmer).quantity(new BigDecimal("10.00")).build();
+            final Product product = Product.builder().id("prod-1").farmer(farmer).build();
             final OrderItem item = OrderItem.builder().product(product).quantity(new BigDecimal("2.00")).build();
 
             final Order order = Order.builder()
@@ -100,6 +100,7 @@ class PaymentServiceImplTest {
             order.setId(orderId);
 
             final Inventory inventory = Inventory.builder()
+                    .totalQuantity(new BigDecimal("10.00"))
                     .reservedQuantity(new BigDecimal("2.00"))
                     .build();
 
@@ -129,7 +130,7 @@ class PaymentServiceImplTest {
 
             assertThat(result).isSameAs(responseDto);
             assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
-            assertThat(product.getQuantity()).isEqualByComparingTo("8.00");
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("8.00");
             assertThat(inventory.getReservedQuantity()).isEqualByComparingTo("0.00");
 
             then(deliveryService).should().createDelivery(order);
@@ -153,6 +154,7 @@ class PaymentServiceImplTest {
             order.setId(orderId);
 
             final Inventory inventory = Inventory.builder()
+                    .totalQuantity(new BigDecimal("10.00"))
                     .reservedQuantity(new BigDecimal("2.00"))
                     .build();
 
@@ -180,6 +182,7 @@ class PaymentServiceImplTest {
                     .isEqualTo(ErrorCode.PAYMENT_FAILED);
 
             assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("10.00");
             assertThat(inventory.getReservedQuantity()).isEqualByComparingTo("0.00");
         }
     }

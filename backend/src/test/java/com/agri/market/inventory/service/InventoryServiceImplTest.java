@@ -36,9 +36,6 @@ class InventoryServiceImplTest {
     private InventoryRepository inventoryRepository;
 
     @Mock
-    private ProductRepository productRepository;
-
-    @Mock
     private InventoryMapper inventoryMapper;
 
     @InjectMocks
@@ -101,21 +98,22 @@ class InventoryServiceImplTest {
             final String productId = "p1";
             final String farmerId = "f1";
             final User farmer = User.builder().id(farmerId).build();
-            final Product product = Product.builder().id(productId).farmer(farmer).quantity(new BigDecimal("50")).build();
-            final Inventory inventory = Inventory.builder().id("inv-1").product(product).reservedQuantity(new BigDecimal("10")).build();
+            final Product product = Product.builder().id(productId).farmer(farmer).build();
+            final Inventory inventory = Inventory.builder().id("inv-1").product(product).totalQuantity(new BigDecimal("50")).reservedQuantity(new BigDecimal("10")).build();
             final InventoryResponseDto dto = InventoryResponseDto.builder().productId(productId).build();
 
             final InventoryUpdateRequestDto request = new InventoryUpdateRequestDto();
             request.setQuantity(new BigDecimal("100"));
 
             given(inventoryRepository.findByProductIdForUpdate(productId)).willReturn(Optional.of(inventory));
+            given(inventoryRepository.save(inventory)).willReturn(inventory);
             given(inventoryMapper.toResponseDto(inventory)).willReturn(dto);
 
             final InventoryResponseDto result = inventoryService.updateInventory(productId, farmerId, request);
 
             assertThat(result).isSameAs(dto);
-            assertThat(product.getQuantity()).isEqualByComparingTo("100");
-            then(productRepository).should().save(product);
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("100");
+            then(inventoryRepository).should().save(inventory);
         }
 
         @Test
@@ -124,7 +122,7 @@ class InventoryServiceImplTest {
             final String farmerId = "f1";
             final User farmer = User.builder().id(farmerId).build();
             final Product product = Product.builder().id(productId).farmer(farmer).build();
-            final Inventory inventory = Inventory.builder().id("inv-1").product(product).reservedQuantity(new BigDecimal("30")).build();
+            final Inventory inventory = Inventory.builder().id("inv-1").product(product).totalQuantity(new BigDecimal("50")).reservedQuantity(new BigDecimal("30")).build();
 
             final InventoryUpdateRequestDto request = new InventoryUpdateRequestDto();
             request.setQuantity(new BigDecimal("20"));
@@ -165,20 +163,22 @@ class InventoryServiceImplTest {
             final String productId = "p1";
             final String farmerId = "f1";
             final User farmer = User.builder().id(farmerId).build();
-            final Product product = Product.builder().id(productId).farmer(farmer).quantity(new BigDecimal("50")).build();
-            final Inventory inventory = Inventory.builder().id("inv-1").product(product).build();
+            final Product product = Product.builder().id(productId).farmer(farmer).build();
+            final Inventory inventory = Inventory.builder().id("inv-1").product(product).totalQuantity(new BigDecimal("50")).build();
             final InventoryResponseDto dto = InventoryResponseDto.builder().build();
 
             final StockAdjustmentRequestDto request = new StockAdjustmentRequestDto();
             request.setQuantity(new BigDecimal("25"));
 
             given(inventoryRepository.findByProductIdForUpdate(productId)).willReturn(Optional.of(inventory));
+            given(inventoryRepository.save(inventory)).willReturn(inventory);
             given(inventoryMapper.toResponseDto(inventory)).willReturn(dto);
 
             final InventoryResponseDto result = inventoryService.addStock(productId, farmerId, request);
 
             assertThat(result).isSameAs(dto);
-            assertThat(product.getQuantity()).isEqualByComparingTo("75");
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("75");
+            then(inventoryRepository).should().save(inventory);
         }
 
         @Test
@@ -186,20 +186,22 @@ class InventoryServiceImplTest {
             final String productId = "p1";
             final String farmerId = "f1";
             final User farmer = User.builder().id(farmerId).build();
-            final Product product = Product.builder().id(productId).farmer(farmer).quantity(new BigDecimal("50")).build();
-            final Inventory inventory = Inventory.builder().id("inv-1").product(product).reservedQuantity(new BigDecimal("10")).build();
+            final Product product = Product.builder().id(productId).farmer(farmer).build();
+            final Inventory inventory = Inventory.builder().id("inv-1").product(product).totalQuantity(new BigDecimal("50")).reservedQuantity(new BigDecimal("10")).build();
             final InventoryResponseDto dto = InventoryResponseDto.builder().build();
 
             final StockAdjustmentRequestDto request = new StockAdjustmentRequestDto();
             request.setQuantity(new BigDecimal("20"));
 
             given(inventoryRepository.findByProductIdForUpdate(productId)).willReturn(Optional.of(inventory));
+            given(inventoryRepository.save(inventory)).willReturn(inventory);
             given(inventoryMapper.toResponseDto(inventory)).willReturn(dto);
 
             final InventoryResponseDto result = inventoryService.removeStock(productId, farmerId, request);
 
             assertThat(result).isSameAs(dto);
-            assertThat(product.getQuantity()).isEqualByComparingTo("30");
+            assertThat(inventory.getTotalQuantity()).isEqualByComparingTo("30");
+            then(inventoryRepository).should().save(inventory);
         }
 
         @Test
@@ -207,8 +209,8 @@ class InventoryServiceImplTest {
             final String productId = "p1";
             final String farmerId = "f1";
             final User farmer = User.builder().id(farmerId).build();
-            final Product product = Product.builder().id(productId).farmer(farmer).quantity(new BigDecimal("50")).build();
-            final Inventory inventory = Inventory.builder().id("inv-1").product(product).reservedQuantity(new BigDecimal("40")).build();
+            final Product product = Product.builder().id(productId).farmer(farmer).build();
+            final Inventory inventory = Inventory.builder().id("inv-1").product(product).totalQuantity(new BigDecimal("50")).reservedQuantity(new BigDecimal("40")).build();
 
             final StockAdjustmentRequestDto request = new StockAdjustmentRequestDto();
             request.setQuantity(new BigDecimal("20"));

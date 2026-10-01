@@ -83,13 +83,6 @@ public class Product {
 
     @Column(
             nullable = false,
-            precision = 12,
-            scale = 2
-    )
-    private BigDecimal quantity;
-
-    @Column(
-            nullable = false,
             length = 100
     )
     private String location;

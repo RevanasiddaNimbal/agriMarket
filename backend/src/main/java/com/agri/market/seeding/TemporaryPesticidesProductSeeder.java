@@ -294,7 +294,6 @@ public class TemporaryPesticidesProductSeeder {
                             .description(pesticide.description())
                             .price(pesticide.price())
                             .unit(pesticide.unit())
-                            .quantity(pesticide.quantity())
                             .location(pesticide.location())
                             .status("ACTIVE")
                             .build();
@@ -315,6 +314,7 @@ public class TemporaryPesticidesProductSeeder {
             final Inventory inventory =
                     Inventory.builder()
                             .product(savedProduct)
+                            .totalQuantity(pesticide.quantity())
                             .reservedQuantity(BigDecimal.ZERO)
                             .build();
 

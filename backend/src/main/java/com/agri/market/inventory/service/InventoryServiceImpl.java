@@ -9,7 +9,6 @@ import com.agri.market.inventory.entity.Inventory;
 import com.agri.market.inventory.mapper.InventoryMapper;
 import com.agri.market.inventory.repository.InventoryRepository;
 import com.agri.market.product.entity.Product;
-import com.agri.market.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,6 @@ import java.util.List;
 public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepository inventoryRepository;
-    private final ProductRepository productRepository;
     private final InventoryMapper inventoryMapper;
 
     @Override
@@ -105,16 +103,17 @@ public class InventoryServiceImpl implements InventoryService {
             );
         }
 
-        product.setQuantity(request.getQuantity());
+        inventory.setTotalQuantity(request.getQuantity());
 
-        productRepository.save(product);
+        final Inventory updatedInventory =
+                inventoryRepository.save(inventory);
 
         log.info(
                 "Inventory quantity updated successfully for product: {}",
                 productId
         );
 
-        return inventoryMapper.toResponseDto(inventory);
+        return inventoryMapper.toResponseDto(updatedInventory);
     }
 
     @Override
@@ -138,24 +137,25 @@ public class InventoryServiceImpl implements InventoryService {
 
         validateProductOwnership(product, farmerId);
 
-        BigDecimal currentQuantity = product.getQuantity();
+        BigDecimal currentQuantity = inventory.getTotalQuantity();
 
         if (currentQuantity == null) {
             currentQuantity = BigDecimal.ZERO;
         }
 
-        product.setQuantity(
+        inventory.setTotalQuantity(
                 currentQuantity.add(request.getQuantity())
         );
 
-        productRepository.save(product);
+        final Inventory updatedInventory =
+                inventoryRepository.save(inventory);
 
         log.info(
                 "Stock added successfully for product: {}",
                 productId
         );
 
-        return inventoryMapper.toResponseDto(inventory);
+        return inventoryMapper.toResponseDto(updatedInventory);
     }
 
     @Override
@@ -179,7 +179,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         validateProductOwnership(product, farmerId);
 
-        BigDecimal currentQuantity = product.getQuantity();
+        BigDecimal currentQuantity = inventory.getTotalQuantity();
 
         if (currentQuantity == null) {
             currentQuantity = BigDecimal.ZERO;
@@ -216,16 +216,17 @@ public class InventoryServiceImpl implements InventoryService {
             );
         }
 
-        product.setQuantity(newQuantity);
+        inventory.setTotalQuantity(newQuantity);
 
-        productRepository.save(product);
+        final Inventory updatedInventory =
+                inventoryRepository.save(inventory);
 
         log.info(
                 "Stock removed successfully for product: {}",
                 productId
         );
 
-        return inventoryMapper.toResponseDto(inventory);
+        return inventoryMapper.toResponseDto(updatedInventory);
     }
 
     private Inventory findInventory(String productId) {

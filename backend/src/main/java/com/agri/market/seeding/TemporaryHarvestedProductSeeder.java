@@ -196,7 +196,6 @@ public class TemporaryHarvestedProductSeeder {
                             .description(productData.description())
                             .price(productData.price())
                             .unit(productData.unit())
-                            .quantity(productData.quantity())
                             .location(productData.location())
                             .status("ACTIVE")
                             .build();
@@ -217,6 +216,7 @@ public class TemporaryHarvestedProductSeeder {
             final Inventory inventory =
                     Inventory.builder()
                             .product(savedProduct)
+                            .totalQuantity(productData.quantity())
                             .reservedQuantity(BigDecimal.ZERO)
                             .build();
 

@@ -26,7 +26,6 @@ class InventoryMapperTest {
     void shouldMapInventoryToResponseDtoCorrectly() {
         final Product product = Product.builder()
                 .id("prod-1")
-                .quantity(new BigDecimal("100.00"))
                 .unit("KG")
                 .status(ProductStatus.ACTIVE.name())
                 .build();
@@ -34,6 +33,7 @@ class InventoryMapperTest {
         final Inventory inventory = Inventory.builder()
                 .id("inv-1")
                 .product(product)
+                .totalQuantity(new BigDecimal("100.00"))
                 .reservedQuantity(new BigDecimal("20.00"))
                 .build();
 
@@ -51,7 +51,6 @@ class InventoryMapperTest {
     void shouldHandleNullQuantitiesAndNonActiveProduct() {
         final Product product = Product.builder()
                 .id("prod-2")
-                .quantity(null)
                 .unit("BAG")
                 .status(ProductStatus.INACTIVE.name())
                 .build();
@@ -59,6 +58,7 @@ class InventoryMapperTest {
         final Inventory inventory = Inventory.builder()
                 .id("inv-2")
                 .product(product)
+                .totalQuantity(null)
                 .reservedQuantity(null)
                 .build();
 

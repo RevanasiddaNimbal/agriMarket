@@ -57,7 +57,6 @@ public class ProductServiceImpl implements ProductService {
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .unit(request.getUnit())
-                .quantity(request.getQuantity())
                 .location(request.getLocation())
                 .status(ProductStatus.ACTIVE.name())
                 .build();
@@ -67,6 +66,7 @@ public class ProductServiceImpl implements ProductService {
 
         final Inventory inventory = Inventory.builder()
                 .product(savedProduct)
+                .totalQuantity(request.getQuantity() != null ? request.getQuantity() : java.math.BigDecimal.ZERO)
                 .reservedQuantity(java.math.BigDecimal.ZERO)
                 .build();
 
@@ -184,11 +184,20 @@ public class ProductServiceImpl implements ProductService {
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
         product.setUnit(request.getUnit());
-        product.setQuantity(request.getQuantity());
         product.setLocation(request.getLocation());
 
         final Product updatedProduct =
                 productRepository.save(product);
+
+        if (request.getQuantity() != null) {
+            final Inventory inventory = inventoryRepository.findByProductId(productId)
+                    .orElseGet(() -> Inventory.builder()
+                            .product(updatedProduct)
+                            .reservedQuantity(java.math.BigDecimal.ZERO)
+                            .build());
+            inventory.setTotalQuantity(request.getQuantity());
+            inventoryRepository.save(inventory);
+        }
 
         log.info(
                 "Product updated successfully: {}",

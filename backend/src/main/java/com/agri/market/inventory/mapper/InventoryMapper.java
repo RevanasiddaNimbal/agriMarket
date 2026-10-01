@@ -16,9 +16,9 @@ public class InventoryMapper {
             final Inventory inventory
     ) {
 
-        final BigDecimal productQuantity =
-                inventory.getProduct().getQuantity() != null
-                        ? inventory.getProduct().getQuantity()
+        final BigDecimal totalQuantity =
+                inventory.getTotalQuantity() != null
+                        ? inventory.getTotalQuantity()
                         : BigDecimal.ZERO;
 
         final BigDecimal reservedQuantity =
@@ -27,7 +27,7 @@ public class InventoryMapper {
                         : BigDecimal.ZERO;
 
         final BigDecimal availableQuantity =
-                productQuantity.subtract(reservedQuantity);
+                totalQuantity.subtract(reservedQuantity);
 
         return InventoryResponseDto.builder()
                 .productId(inventory.getProduct().getId())

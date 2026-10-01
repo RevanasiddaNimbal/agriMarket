@@ -8,8 +8,6 @@ import com.agri.market.inventory.dto.StockAdjustmentRequestDto;
 import com.agri.market.inventory.entity.Inventory;
 import com.agri.market.inventory.mapper.InventoryMapper;
 import com.agri.market.inventory.repository.InventoryRepository;
-import com.agri.market.product.entity.Product;
-import com.agri.market.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +22,6 @@ import java.math.BigDecimal;
 public class AdminInventoryServiceImpl implements AdminInventoryService {
 
     private final InventoryRepository inventoryRepository;
-    private final ProductRepository productRepository;
     private final InventoryMapper inventoryMapper;
 
     @Override
@@ -58,9 +55,6 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
         final Inventory inventory =
                 findInventoryForUpdate(productId);
 
-        final Product product =
-                inventory.getProduct();
-
         final BigDecimal reservedQuantity =
                 inventory.getReservedQuantity();
 
@@ -78,16 +72,17 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
             );
         }
 
-        product.setQuantity(request.getQuantity());
+        inventory.setTotalQuantity(request.getQuantity());
 
-        productRepository.save(product);
+        final Inventory updatedInventory =
+                inventoryRepository.save(inventory);
 
         log.info(
                 "Admin inventory updated successfully for product: {}",
                 productId
         );
 
-        return inventoryMapper.toResponseDto(inventory);
+        return inventoryMapper.toResponseDto(updatedInventory);
     }
 
     @Override
@@ -105,24 +100,22 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
         final Inventory inventory =
                 findInventoryForUpdate(productId);
 
-        final Product product =
-                inventory.getProduct();
-
         final BigDecimal currentQuantity =
-                getCurrentQuantity(product);
+                getCurrentQuantity(inventory);
 
-        product.setQuantity(
+        inventory.setTotalQuantity(
                 currentQuantity.add(request.getQuantity())
         );
 
-        productRepository.save(product);
+        final Inventory updatedInventory =
+                inventoryRepository.save(inventory);
 
         log.info(
                 "Admin stock added successfully for product: {}",
                 productId
         );
 
-        return inventoryMapper.toResponseDto(inventory);
+        return inventoryMapper.toResponseDto(updatedInventory);
     }
 
     @Override
@@ -140,11 +133,8 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
         final Inventory inventory =
                 findInventoryForUpdate(productId);
 
-        final Product product =
-                inventory.getProduct();
-
         final BigDecimal currentQuantity =
-                getCurrentQuantity(product);
+                getCurrentQuantity(inventory);
 
         final BigDecimal newQuantity =
                 currentQuantity.subtract(request.getQuantity());
@@ -177,16 +167,17 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
             );
         }
 
-        product.setQuantity(newQuantity);
+        inventory.setTotalQuantity(newQuantity);
 
-        productRepository.save(product);
+        final Inventory updatedInventory =
+                inventoryRepository.save(inventory);
 
         log.info(
                 "Admin stock removed successfully for product: {}",
                 productId
         );
 
-        return inventoryMapper.toResponseDto(inventory);
+        return inventoryMapper.toResponseDto(updatedInventory);
     }
 
     private Inventory findInventory(
@@ -226,13 +217,13 @@ public class AdminInventoryServiceImpl implements AdminInventoryService {
     }
 
     private BigDecimal getCurrentQuantity(
-            final Product product
+            final Inventory inventory
     ) {
 
-        if (product.getQuantity() == null) {
+        if (inventory.getTotalQuantity() == null) {
             return BigDecimal.ZERO;
         }
 
-        return product.getQuantity();
+        return inventory.getTotalQuantity();
     }
 }

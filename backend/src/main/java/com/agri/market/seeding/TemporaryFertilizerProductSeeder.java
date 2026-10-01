@@ -255,7 +255,6 @@ public class TemporaryFertilizerProductSeeder {
                             .description(fertilizer.description())
                             .price(fertilizer.price())
                             .unit(fertilizer.unit())
-                            .quantity(fertilizer.quantity())
                             .location(fertilizer.location())
                             .status("ACTIVE")
                             .build();
@@ -276,6 +275,7 @@ public class TemporaryFertilizerProductSeeder {
             final Inventory inventory =
                     Inventory.builder()
                             .product(savedProduct)
+                            .totalQuantity(fertilizer.quantity())
                             .reservedQuantity(BigDecimal.ZERO)
                             .build();
 
