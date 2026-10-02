@@ -1,5 +1,6 @@
 package com.agri.market.location.entity;
 
+import com.agri.market.address.entity.Address;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -7,6 +8,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -91,4 +94,11 @@ public class Taluk {
             nullable = false
     )
     private LocalDateTime updatedAt;
+
+    @OneToMany(
+            mappedBy = "taluk",
+            fetch = FetchType.LAZY
+    )
+    @Builder.Default
+    private List<Address> addresses = new ArrayList<>();
 }

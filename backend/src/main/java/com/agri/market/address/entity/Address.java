@@ -1,6 +1,7 @@
 package com.agri.market.address.entity;
 
 import com.agri.market.common.entity.BaseEntity;
+import com.agri.market.location.entity.Taluk;
 import com.agri.market.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -23,6 +24,14 @@ public class Address extends BaseEntity {
             foreignKey = @ForeignKey(name = "fk_address_user")
     )
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "taluk_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_addresses_taluk")
+    )
+    private Taluk taluk;
 
     @Column(
             name = "address_line1",
@@ -49,20 +58,6 @@ public class Address extends BaseEntity {
             length = 100
     )
     private String city;
-
-    @Column(
-            name = "district",
-            nullable = false,
-            length = 100
-    )
-    private String district;
-
-    @Column(
-            name = "state",
-            nullable = false,
-            length = 100
-    )
-    private String state;
 
     @Column(
             name = "pincode",
@@ -117,4 +112,16 @@ public class Address extends BaseEntity {
     )
     @Builder.Default
     private boolean defaultAddress = false;
+
+    public String getDistrict() {
+        return taluk != null && taluk.getDistrict() != null
+                ? taluk.getDistrict().getName()
+                : null;
+    }
+
+    public String getState() {
+        return taluk != null && taluk.getDistrict() != null && taluk.getDistrict().getState() != null
+                ? taluk.getDistrict().getState().getName()
+                : null;
+    }
 }

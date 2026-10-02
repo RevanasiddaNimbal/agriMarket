@@ -14,6 +14,9 @@ public interface AddressRepository extends JpaRepository<Address, String> {
     @Query("""
             SELECT a
             FROM Address a
+            LEFT JOIN FETCH a.taluk t
+            LEFT JOIN FETCH t.district d
+            LEFT JOIN FETCH d.state s
             WHERE a.user.id = :userId
             ORDER BY a.defaultAddress DESC, a.createdDate DESC
             """)
@@ -24,6 +27,9 @@ public interface AddressRepository extends JpaRepository<Address, String> {
     @Query("""
             SELECT a
             FROM Address a
+            LEFT JOIN FETCH a.taluk t
+            LEFT JOIN FETCH t.district d
+            LEFT JOIN FETCH d.state s
             WHERE a.id = :addressId
             AND a.user.id = :userId
             """)
@@ -35,6 +41,9 @@ public interface AddressRepository extends JpaRepository<Address, String> {
     @Query("""
             SELECT a
             FROM Address a
+            LEFT JOIN FETCH a.taluk t
+            LEFT JOIN FETCH t.district d
+            LEFT JOIN FETCH d.state s
             WHERE a.user.id = :userId
             AND a.defaultAddress = true
             """)

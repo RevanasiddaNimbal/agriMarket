@@ -8,12 +8,19 @@ import com.agri.market.address.entity.LocationType;
 import com.agri.market.address.mapper.AddressMapper;
 import com.agri.market.address.repository.AddressRepository;
 import com.agri.market.common.exception.BusinessException;
+import com.agri.market.common.exception.ErrorCode;
+import com.agri.market.location.entity.District;
+import com.agri.market.location.entity.Taluk;
+import com.agri.market.location.repository.DistrictRepository;
+import com.agri.market.location.repository.StateRepository;
+import com.agri.market.location.repository.TalukRepository;
 import com.agri.market.user.entity.User;
 import com.agri.market.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,6 +35,9 @@ public class AddressServiceImpl implements AddressService {
     private final AddressRepository addressRepository;
     private final UserRepository userRepository;
     private final AddressMapper addressMapper;
+    private final TalukRepository talukRepository;
+    private final DistrictRepository districtRepository;
+    private final StateRepository stateRepository;
 
     @Override
     @Transactional
@@ -43,7 +53,13 @@ public class AddressServiceImpl implements AddressService {
                 request.getLongitude()
         );
 
-        final Address address = addressMapper.toEntity(request);
+        final Taluk taluk = resolveTaluk(
+                request.getState(),
+                request.getDistrict(),
+                request.getCity()
+        );
+
+        final Address address = addressMapper.toEntity(request, taluk);
 
         address.setUser(user);
 
@@ -110,6 +126,13 @@ public class AddressServiceImpl implements AddressService {
                 address,
                 request
         );
+
+        final String targetState = request.getState() != null ? request.getState() : address.getState();
+        final String targetDistrict = request.getDistrict() != null ? request.getDistrict() : address.getDistrict();
+        final String targetCity = request.getCity() != null ? request.getCity() : address.getCity();
+
+        final Taluk taluk = resolveTaluk(targetState, targetDistrict, targetCity);
+        address.setTaluk(taluk);
 
         normalizeAndValidateLocation(address);
 
@@ -185,6 +208,40 @@ public class AddressServiceImpl implements AddressService {
                 addressId,
                 userEmail
         );
+    }
+
+    private Taluk resolveTaluk(
+            final String stateName,
+            final String districtName,
+            final String cityOrTalukName
+    ) {
+        if (!StringUtils.hasText(stateName) || !StringUtils.hasText(districtName)) {
+            throw new BusinessException(ADDRESS_NOT_FOUND);
+        }
+
+        final District district = districtRepository.findByStateNameAndDistrictName(
+                stateName.trim(),
+                districtName.trim()
+        ).orElseThrow(() -> new BusinessException(ADDRESS_NOT_FOUND));
+
+        if (StringUtils.hasText(cityOrTalukName)) {
+            final String normalized = cityOrTalukName.replaceAll("[\\s\\-_]", "").toLowerCase();
+            final Taluk taluk = talukRepository.findByDistrictIdAndNormalizedName(
+                    district.getId(),
+                    normalized
+            ).orElse(null);
+
+            if (taluk != null) {
+                return taluk;
+            }
+        }
+
+        final List<Taluk> taluks = talukRepository.findAllByDistrictIdAndActiveTrueOrderByNameAsc(district.getId());
+        if (!taluks.isEmpty()) {
+            return taluks.get(0);
+        }
+
+        throw new BusinessException(ADDRESS_NOT_FOUND);
     }
 
     private User findUserByEmail(

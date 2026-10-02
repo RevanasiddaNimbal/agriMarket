@@ -6,6 +6,9 @@ import com.agri.market.address.dto.UpdateAddressRequestDto;
 import com.agri.market.address.entity.Address;
 import com.agri.market.address.entity.AddressType;
 import com.agri.market.address.entity.LocationType;
+import com.agri.market.location.entity.District;
+import com.agri.market.location.entity.State;
+import com.agri.market.location.entity.Taluk;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -58,14 +61,6 @@ class AddressMapperTest {
             assertEquals(
                     request.getCity(),
                     result.getCity()
-            );
-            assertEquals(
-                    request.getDistrict(),
-                    result.getDistrict()
-            );
-            assertEquals(
-                    request.getState(),
-                    result.getState()
             );
             assertEquals(
                     request.getPincode(),
@@ -181,14 +176,17 @@ class AddressMapperTest {
         @Test
         void shouldUpdateAllNonNullFields() {
 
+            final State state = State.builder().name("Old State").build();
+            final District district = District.builder().name("Old District").state(state).build();
+            final Taluk taluk = Taluk.builder().name("Old Taluk").district(district).build();
+
             final Address address =
                     Address.builder()
                             .addressLine1("Old Address")
                             .addressLine2("Old Line 2")
                             .village("Old Village")
                             .city("Old City")
-                            .district("Old District")
-                            .state("Old State")
+                            .taluk(taluk)
                             .pincode("111111")
                             .country("Old Country")
                             .locationType(LocationType.MANUAL)
@@ -219,8 +217,6 @@ class AddressMapperTest {
             assertEquals("New Line 2", address.getAddressLine2());
             assertEquals("New Village", address.getVillage());
             assertEquals("New City", address.getCity());
-            assertEquals("New District", address.getDistrict());
-            assertEquals("New State", address.getState());
             assertEquals("222222", address.getPincode());
             assertEquals("New Country", address.getCountry());
             assertEquals(LocationType.MAP, address.getLocationType());
@@ -239,14 +235,17 @@ class AddressMapperTest {
         @Test
         void shouldIgnoreNullUpdateFields() {
 
+            final State state = State.builder().name("Karnataka").build();
+            final District district = District.builder().name("Existing District").state(state).build();
+            final Taluk taluk = Taluk.builder().name("Existing Taluk").district(district).build();
+
             final Address address =
                     Address.builder()
                             .addressLine1("Existing Address")
                             .addressLine2("Existing Line 2")
                             .village("Existing Village")
                             .city("Existing City")
-                            .district("Existing District")
-                            .state("Karnataka")
+                            .taluk(taluk)
                             .pincode("586101")
                             .country("India")
                             .locationType(LocationType.MAP)
@@ -352,14 +351,17 @@ class AddressMapperTest {
             final BigDecimal longitude =
                     new BigDecimal("75.710030");
 
+            final State state = State.builder().name("Karnataka").build();
+            final District district = District.builder().name("Vijayapura").state(state).build();
+            final Taluk taluk = Taluk.builder().name("Vijayapura").district(district).build();
+
             final Address address =
                     Address.builder()
                             .addressLine1("Farm Road")
                             .addressLine2("Near Lake")
                             .village("Nimbal")
                             .city("Vijayapura")
-                            .district("Vijayapura")
-                            .state("Karnataka")
+                            .taluk(taluk)
                             .pincode("586101")
                             .country("India")
                             .locationType(LocationType.MAP)

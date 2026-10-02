@@ -4,6 +4,7 @@ import com.agri.market.address.dto.AddressResponseDto;
 import com.agri.market.address.dto.CreateAddressRequestDto;
 import com.agri.market.address.dto.UpdateAddressRequestDto;
 import com.agri.market.address.entity.Address;
+import com.agri.market.location.entity.Taluk;
 import com.agri.market.order.entity.OrderAddressSnapshot;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +19,6 @@ public class AddressMapper {
                 .addressLine2(request.getAddressLine2())
                 .village(request.getVillage())
                 .city(request.getCity())
-                .district(request.getDistrict())
-                .state(request.getState())
                 .pincode(request.getPincode())
                 .country(request.getCountry())
                 .locationType(request.getLocationType())
@@ -28,6 +27,15 @@ public class AddressMapper {
                 .addressType(request.getAddressType())
                 .defaultAddress(request.isDefaultAddress())
                 .build();
+    }
+
+    public Address toEntity(
+            final CreateAddressRequestDto request,
+            final Taluk taluk
+    ) {
+        final Address address = toEntity(request);
+        address.setTaluk(taluk);
+        return address;
     }
 
     public void updateEntity(
@@ -48,14 +56,6 @@ public class AddressMapper {
 
         if (request.getCity() != null) {
             address.setCity(request.getCity());
-        }
-
-        if (request.getDistrict() != null) {
-            address.setDistrict(request.getDistrict());
-        }
-
-        if (request.getState() != null) {
-            address.setState(request.getState());
         }
 
         if (request.getPincode() != null) {
@@ -90,6 +90,10 @@ public class AddressMapper {
     public AddressResponseDto toResponse(
             final Address address
     ) {
+        if (address == null) {
+            return null;
+        }
+
         return AddressResponseDto.builder()
                 .id(address.getId())
                 .addressLine1(address.getAddressLine1())
@@ -113,6 +117,10 @@ public class AddressMapper {
     public AddressResponseDto toSnapshotResponse(
             final OrderAddressSnapshot orderAddressSnapshot
     ) {
+        if (orderAddressSnapshot == null) {
+            return null;
+        }
+
         return AddressResponseDto.builder()
                 .id(orderAddressSnapshot.getId())
                 .addressLine1(orderAddressSnapshot.getAddressLine1())
