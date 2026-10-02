@@ -36,4 +36,19 @@ public interface TalukRepository extends JpaRepository<Taluk, String> {
             @Param("districtId") String districtId,
             @Param("normalizedName") String normalizedName
     );
+
+    @Query("""
+            SELECT t
+            FROM Taluk t
+            JOIN FETCH t.district d
+            JOIN FETCH d.state s
+            WHERE t.active = true
+              AND d.active = true
+              AND s.active = true
+              AND LOWER(REPLACE(REPLACE(REPLACE(t.name, ' ', ''), '-', ''), '_', '')) = :normalizedName
+            ORDER BY s.name ASC, d.name ASC, t.name ASC
+            """)
+    List<Taluk> findActiveByNormalizedName(
+            @Param("normalizedName") String normalizedName
+    );
 }
