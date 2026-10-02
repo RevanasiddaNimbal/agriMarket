@@ -15,21 +15,29 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
             WHERE m.arrivalDate = (
                 SELECT MAX(m2.arrivalDate)
                 FROM MarketPrice m2
             )
-            ORDER BY m.commodity ASC, m.state ASC, m.market ASC
+            ORDER BY c.name ASC, s.name ASC, mk.name ASC
             """)
     List<MarketPrice> findLatestPrices(Pageable pageable);
 
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
-            AND LOWER(m.state) = LOWER(:state)
-            AND LOWER(m.district) = LOWER(:district)
-            AND LOWER(m.market) = LOWER(:market)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
+            AND LOWER(s.name) = LOWER(:state)
+            AND LOWER(d.name) = LOWER(:district)
+            AND LOWER(mk.name) = LOWER(:market)
             ORDER BY m.arrivalDate DESC
             """)
     List<MarketPrice> findByMarket(
@@ -42,9 +50,13 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
-            AND LOWER(m.state) = LOWER(:state)
-            AND LOWER(m.district) = LOWER(:district)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
+            AND LOWER(s.name) = LOWER(:state)
+            AND LOWER(d.name) = LOWER(:district)
             ORDER BY m.arrivalDate DESC
             """)
     List<MarketPrice> findByCommodityStateDistrict(
@@ -56,8 +68,12 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
-            AND LOWER(m.state) = LOWER(:state)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
+            AND LOWER(s.name) = LOWER(:state)
             ORDER BY m.arrivalDate DESC
             """)
     List<MarketPrice> findByCommodityState(
@@ -68,7 +84,11 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
             ORDER BY m.arrivalDate DESC
             """)
     List<MarketPrice> findByCommodity(
@@ -78,7 +98,11 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.state) = LOWER(:state)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(s.name) = LOWER(:state)
             ORDER BY m.arrivalDate DESC
             """)
     List<MarketPrice> findByState(
@@ -88,7 +112,11 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.district) = LOWER(:district)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(d.name) = LOWER(:district)
             ORDER BY m.arrivalDate DESC
             """)
     List<MarketPrice> findByDistrict(
@@ -98,7 +126,11 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.market) = LOWER(:market)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(mk.name) = LOWER(:market)
             ORDER BY m.arrivalDate DESC
             """)
     List<MarketPrice> findByMarketOnly(
@@ -108,9 +140,13 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
             AND m.arrivalDate = :date
-            ORDER BY m.state ASC, m.market ASC
+            ORDER BY s.name ASC, mk.name ASC
             """)
     List<MarketPrice> findByCommodityAndDate(
             @Param("commodity") String commodity,
@@ -120,10 +156,14 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
-            AND LOWER(m.state) = LOWER(:state)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
+            AND LOWER(s.name) = LOWER(:state)
             AND m.arrivalDate = :date
-            ORDER BY m.market ASC
+            ORDER BY mk.name ASC
             """)
     List<MarketPrice> findByCommodityStateAndDate(
             @Param("commodity") String commodity,
@@ -134,11 +174,15 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
-            AND LOWER(m.state) = LOWER(:state)
-            AND LOWER(m.district) = LOWER(:district)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
+            AND LOWER(s.name) = LOWER(:state)
+            AND LOWER(d.name) = LOWER(:district)
             AND m.arrivalDate = :date
-            ORDER BY m.market ASC
+            ORDER BY mk.name ASC
             """)
     List<MarketPrice> findByCommodityStateDistrictAndDate(
             @Param("commodity") String commodity,
@@ -150,10 +194,14 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
-            AND LOWER(m.state) = LOWER(:state)
-            AND LOWER(m.district) = LOWER(:district)
-            AND LOWER(m.market) = LOWER(:market)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
+            AND LOWER(s.name) = LOWER(:state)
+            AND LOWER(d.name) = LOWER(:district)
+            AND LOWER(mk.name) = LOWER(:market)
             AND m.arrivalDate = :date
             """)
     List<MarketPrice> findByMarketAndDate(
@@ -167,9 +215,13 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.state) = LOWER(:state)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(s.name) = LOWER(:state)
             AND m.arrivalDate = :date
-            ORDER BY m.commodity ASC, m.market ASC
+            ORDER BY c.name ASC, mk.name ASC
             """)
     List<MarketPrice> findByStateAndDate(
             @Param("state") String state,
@@ -179,9 +231,13 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.district) = LOWER(:district)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(d.name) = LOWER(:district)
             AND m.arrivalDate = :date
-            ORDER BY m.commodity ASC, m.market ASC
+            ORDER BY c.name ASC, mk.name ASC
             """)
     List<MarketPrice> findByDistrictAndDate(
             @Param("district") String district,
@@ -191,9 +247,13 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.market) = LOWER(:market)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(mk.name) = LOWER(:market)
             AND m.arrivalDate = :date
-            ORDER BY m.commodity ASC
+            ORDER BY c.name ASC
             """)
     List<MarketPrice> findByMarketAndDate(
             @Param("market") String market,
@@ -203,7 +263,11 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
             AND m.arrivalDate BETWEEN :fromDate AND :toDate
             ORDER BY m.arrivalDate ASC
             """)
@@ -216,8 +280,12 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
-            AND LOWER(m.state) = LOWER(:state)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
+            AND LOWER(s.name) = LOWER(:state)
             AND m.arrivalDate BETWEEN :fromDate AND :toDate
             ORDER BY m.arrivalDate ASC
             """)
@@ -231,9 +299,13 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
-            AND LOWER(m.state) = LOWER(:state)
-            AND LOWER(m.district) = LOWER(:district)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
+            AND LOWER(s.name) = LOWER(:state)
+            AND LOWER(d.name) = LOWER(:district)
             AND m.arrivalDate BETWEEN :fromDate AND :toDate
             ORDER BY m.arrivalDate ASC
             """)
@@ -248,10 +320,14 @@ public interface MarketPriceRepository
     @Query("""
             SELECT m
             FROM MarketPrice m
-            WHERE LOWER(m.commodity) = LOWER(:commodity)
-            AND LOWER(m.state) = LOWER(:state)
-            AND LOWER(m.district) = LOWER(:district)
-            AND LOWER(m.market) = LOWER(:market)
+            JOIN FETCH m.commodity c
+            JOIN FETCH m.market mk
+            JOIN FETCH mk.district d
+            JOIN FETCH d.state s
+            WHERE LOWER(c.name) = LOWER(:commodity)
+            AND LOWER(s.name) = LOWER(:state)
+            AND LOWER(d.name) = LOWER(:district)
+            AND LOWER(mk.name) = LOWER(:market)
             AND m.arrivalDate BETWEEN :fromDate AND :toDate
             ORDER BY m.arrivalDate ASC
             """)
@@ -264,11 +340,26 @@ public interface MarketPriceRepository
             @Param("toDate") LocalDate toDate
     );
 
+    @Query("""
+            SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END
+            FROM MarketPrice m
+            WHERE LOWER(m.commodity.name) = LOWER(:commodity)
+            AND LOWER(m.market.district.state.name) = LOWER(:state)
+            AND LOWER(m.market.district.name) = LOWER(:district)
+            AND LOWER(m.market.name) = LOWER(:market)
+            AND m.arrivalDate = :arrivalDate
+            """)
     boolean existsByCommodityAndStateAndDistrictAndMarketAndArrivalDate(
-            String commodity,
-            String state,
-            String district,
-            String market,
+            @Param("commodity") String commodity,
+            @Param("state") String state,
+            @Param("district") String district,
+            @Param("market") String market,
+            @Param("arrivalDate") LocalDate arrivalDate
+    );
+
+    boolean existsByCommodityIdAndMarketIdAndArrivalDate(
+            String commodityId,
+            String marketId,
             LocalDate arrivalDate
     );
 }

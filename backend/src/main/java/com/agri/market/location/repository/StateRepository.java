@@ -14,6 +14,8 @@ public interface StateRepository extends JpaRepository<State, String> {
 
     Optional<State> findByNameIgnoreCaseAndActiveTrue(String name);
 
+    Optional<State> findByNameIgnoreCase(String name);
+
     @Query("""
             SELECT s
             FROM State s

@@ -1,5 +1,6 @@
 package com.agri.market.location.entity;
 
+import com.agri.market.marketprice.entity.Market;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -100,4 +101,11 @@ public class District {
     )
     @Builder.Default
     private List<Taluk> taluks = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "district",
+            fetch = FetchType.LAZY
+    )
+    @Builder.Default
+    private List<Market> markets = new ArrayList<>();
 }

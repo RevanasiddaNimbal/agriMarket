@@ -2,14 +2,22 @@ package com.agri.market.marketprice.service;
 
 import com.agri.market.common.exception.BusinessException;
 import com.agri.market.common.exception.ErrorCode;
+import com.agri.market.location.entity.District;
+import com.agri.market.location.entity.State;
+import com.agri.market.location.repository.DistrictRepository;
+import com.agri.market.location.repository.StateRepository;
 import com.agri.market.marketprice.dto.HistoricalMarketPriceDto;
 import com.agri.market.marketprice.dto.MarketPriceDto;
 import com.agri.market.marketprice.dto.MarketPriceResponseDto;
 import com.agri.market.marketprice.dto.MarketPriceTrendDto;
+import com.agri.market.marketprice.entity.Commodity;
+import com.agri.market.marketprice.entity.Market;
 import com.agri.market.marketprice.entity.MarketPrice;
 import com.agri.market.marketprice.mapper.MarketPriceMapper;
 import com.agri.market.marketprice.provider.MarketPriceProvider;
+import com.agri.market.marketprice.repository.CommodityRepository;
 import com.agri.market.marketprice.repository.MarketPriceRepository;
+import com.agri.market.marketprice.repository.MarketRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,6 +31,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,6 +53,18 @@ class MarketPriceServiceImplTest {
     @Mock
     private MarketPriceMapper marketPriceMapper;
 
+    @Mock
+    private CommodityRepository commodityRepository;
+
+    @Mock
+    private MarketRepository marketRepository;
+
+    @Mock
+    private StateRepository stateRepository;
+
+    @Mock
+    private DistrictRepository districtRepository;
+
     private MarketPriceServiceImpl marketPriceService;
 
     @BeforeEach
@@ -52,7 +73,11 @@ class MarketPriceServiceImplTest {
                 new MarketPriceServiceImpl(
                         marketPriceRepository,
                         List.of(marketPriceProvider),
-                        marketPriceMapper
+                        marketPriceMapper,
+                        commodityRepository,
+                        marketRepository,
+                        stateRepository,
+                        districtRepository
                 );
     }
 
@@ -62,10 +87,11 @@ class MarketPriceServiceImplTest {
 
         @Test
         void shouldReturnLatestPricesFromDbWhenNoFiltersGiven() {
+            final Commodity commodity = Commodity.builder().id("c-1").name("Tomato").build();
             final MarketPrice price =
                     MarketPrice.builder()
                             .id("mp-1")
-                            .commodity("Tomato")
+                            .commodity(commodity)
                             .build();
 
             final MarketPriceDto dto =
@@ -124,10 +150,16 @@ class MarketPriceServiceImplTest {
                             .modalPrice(new BigDecimal("1500"))
                             .build();
 
+            final Commodity commodity = Commodity.builder().id("c-2").name("Tomato").build();
+            final State state = State.builder().id("s-2").name("Karnataka").build();
+            final District district = District.builder().id("d-2").name("Vijayapura").state(state).build();
+            final Market market = Market.builder().id("m-2").name("Vijayapura").district(district).build();
+
             final MarketPrice entity =
                     MarketPrice.builder()
                             .id("mp-2")
-                            .commodity("Tomato")
+                            .commodity(commodity)
+                            .market(market)
                             .arrivalDate(LocalDate.of(2026, 9, 29))
                             .modalPrice(new BigDecimal("1500"))
                             .build();
@@ -137,7 +169,8 @@ class MarketPriceServiceImplTest {
                             any(Pageable.class)
                     )
             ).willReturn(
-                    List.of()
+                    List.of(),
+                    List.of(entity)
             );
 
             given(
@@ -152,20 +185,27 @@ class MarketPriceServiceImplTest {
                     List.of(dto)
             );
 
+            given(commodityRepository.findByNameIgnoreCase("Tomato")).willReturn(Optional.of(commodity));
+            given(stateRepository.findByNameIgnoreCase("Karnataka")).willReturn(Optional.of(state));
+            given(districtRepository.findByStateNameAndDistrictName("Karnataka", "Vijayapura")).willReturn(Optional.of(district));
+            given(marketRepository.findByDistrictIdAndNameIgnoreCase("d-2", "Vijayapura")).willReturn(Optional.of(market));
+
             given(
                     marketPriceRepository
-                            .existsByCommodityAndStateAndDistrictAndMarketAndArrivalDate(
-                                    anyString(),
-                                    anyString(),
-                                    anyString(),
-                                    anyString(),
-                                    any(LocalDate.class)
+                            .existsByCommodityIdAndMarketIdAndArrivalDate(
+                                    "c-2",
+                                    "m-2",
+                                    LocalDate.of(2026, 9, 29)
                             )
             ).willReturn(false);
 
             given(
-                    marketPriceMapper.toEntity(dto)
+                    marketPriceMapper.toEntity(dto, commodity, market)
             ).willReturn(entity);
+
+            given(
+                    marketPriceMapper.toDto(entity)
+            ).willReturn(dto);
 
             final MarketPriceResponseDto result =
                     marketPriceService.getMarketPrices(
@@ -195,10 +235,11 @@ class MarketPriceServiceImplTest {
 
         @Test
         void shouldReturnStoredPricesWhenCommodityIsProvided() {
+            final Commodity commodity = Commodity.builder().id("c-3").name("Onion").build();
             final MarketPrice price =
                     MarketPrice.builder()
                             .id("mp-3")
-                            .commodity("Onion")
+                            .commodity(commodity)
                             .build();
 
             final MarketPriceDto dto =
@@ -258,10 +299,16 @@ class MarketPriceServiceImplTest {
                             .modalPrice(new BigDecimal("1400"))
                             .build();
 
+            final Commodity commodity = Commodity.builder().id("c-4").name("Onion").build();
+            final State state = State.builder().id("s-4").name("Karnataka").build();
+            final District district = District.builder().id("d-4").name("Vijayapura").state(state).build();
+            final Market market = Market.builder().id("m-4").name("Vijayapura").district(district).build();
+
             final MarketPrice entity =
                     MarketPrice.builder()
                             .id("mp-4")
-                            .commodity("Onion")
+                            .commodity(commodity)
+                            .market(market)
                             .arrivalDate(date)
                             .modalPrice(new BigDecimal("1400"))
                             .build();
@@ -269,7 +316,8 @@ class MarketPriceServiceImplTest {
             given(
                     marketPriceRepository.findByCommodity("Onion")
             ).willReturn(
-                    List.of()
+                    List.of(),
+                    List.of(entity)
             );
 
             given(
@@ -284,20 +332,27 @@ class MarketPriceServiceImplTest {
                     List.of(dto)
             );
 
+            given(commodityRepository.findByNameIgnoreCase("Onion")).willReturn(Optional.of(commodity));
+            given(stateRepository.findByNameIgnoreCase("Karnataka")).willReturn(Optional.of(state));
+            given(districtRepository.findByStateNameAndDistrictName("Karnataka", "Vijayapura")).willReturn(Optional.of(district));
+            given(marketRepository.findByDistrictIdAndNameIgnoreCase("d-4", "Vijayapura")).willReturn(Optional.of(market));
+
             given(
                     marketPriceRepository
-                            .existsByCommodityAndStateAndDistrictAndMarketAndArrivalDate(
-                                    "Onion",
-                                    "Karnataka",
-                                    "Vijayapura",
-                                    "Vijayapura",
+                            .existsByCommodityIdAndMarketIdAndArrivalDate(
+                                    "c-4",
+                                    "m-4",
                                     date
                             )
             ).willReturn(false);
 
             given(
-                    marketPriceMapper.toEntity(dto)
+                    marketPriceMapper.toEntity(dto, commodity, market)
             ).willReturn(entity);
+
+            given(
+                    marketPriceMapper.toDto(entity)
+            ).willReturn(dto);
 
             final MarketPriceResponseDto result =
                     marketPriceService.getMarketPrices(
@@ -374,9 +429,10 @@ class MarketPriceServiceImplTest {
             final LocalDate date =
                     LocalDate.of(2026, 9, 20);
 
+            final Commodity commodity = Commodity.builder().id("c-5").name("Potato").build();
             final MarketPrice price =
                     MarketPrice.builder()
-                            .commodity("Potato")
+                            .commodity(commodity)
                             .arrivalDate(date)
                             .modalPrice(new BigDecimal("1500"))
                             .build();
@@ -435,10 +491,16 @@ class MarketPriceServiceImplTest {
             final LocalDate missingDate =
                     LocalDate.of(2026, 9, 21);
 
+            final Commodity commodity = Commodity.builder().id("c-6").name("Potato").build();
+            final State state = State.builder().id("s-6").name("Karnataka").build();
+            final District district = District.builder().id("d-6").name("Vijayapura").state(state).build();
+            final Market market = Market.builder().id("m-6").name("Vijayapura").district(district).build();
+
             final MarketPrice storedPrice =
                     MarketPrice.builder()
                             .id("mp-20")
-                            .commodity("Potato")
+                            .commodity(commodity)
+                            .market(market)
                             .arrivalDate(from)
                             .modalPrice(new BigDecimal("1500"))
                             .build();
@@ -446,7 +508,8 @@ class MarketPriceServiceImplTest {
             final MarketPrice fetchedEntity =
                     MarketPrice.builder()
                             .id("mp-21")
-                            .commodity("Potato")
+                            .commodity(commodity)
+                            .market(market)
                             .arrivalDate(missingDate)
                             .modalPrice(new BigDecimal("1550"))
                             .build();
@@ -512,19 +575,22 @@ class MarketPriceServiceImplTest {
                     List.of(fetchedDto)
             );
 
+            given(commodityRepository.findByNameIgnoreCase("Potato")).willReturn(Optional.of(commodity));
+            given(stateRepository.findByNameIgnoreCase("Karnataka")).willReturn(Optional.of(state));
+            given(districtRepository.findByStateNameAndDistrictName("Karnataka", "Vijayapura")).willReturn(Optional.of(district));
+            given(marketRepository.findByDistrictIdAndNameIgnoreCase("d-6", "Vijayapura")).willReturn(Optional.of(market));
+
             given(
                     marketPriceRepository
-                            .existsByCommodityAndStateAndDistrictAndMarketAndArrivalDate(
-                                    eq("Potato"),
-                                    eq("Karnataka"),
-                                    eq("Vijayapura"),
-                                    eq("Vijayapura"),
+                            .existsByCommodityIdAndMarketIdAndArrivalDate(
+                                    eq("c-6"),
+                                    eq("m-6"),
                                     eq(missingDate)
                             )
             ).willReturn(false);
 
             given(
-                    marketPriceMapper.toEntity(fetchedDto)
+                    marketPriceMapper.toEntity(fetchedDto, commodity, market)
             ).willReturn(fetchedEntity);
 
             given(
@@ -584,16 +650,17 @@ class MarketPriceServiceImplTest {
             final LocalDate to =
                     LocalDate.of(2026, 9, 21);
 
+            final Commodity commodity = Commodity.builder().id("c-7").name("Potato").build();
             final MarketPrice firstPrice =
                     MarketPrice.builder()
-                            .commodity("Potato")
+                            .commodity(commodity)
                             .arrivalDate(from)
                             .modalPrice(new BigDecimal("1500"))
                             .build();
 
             final MarketPrice secondPrice =
                     MarketPrice.builder()
-                            .commodity("Potato")
+                            .commodity(commodity)
                             .arrivalDate(to)
                             .modalPrice(new BigDecimal("1550"))
                             .build();

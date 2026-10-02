@@ -2,14 +2,22 @@ package com.agri.market.marketprice.service;
 
 import com.agri.market.common.exception.BusinessException;
 import com.agri.market.common.exception.ErrorCode;
+import com.agri.market.location.entity.District;
+import com.agri.market.location.entity.State;
+import com.agri.market.location.repository.DistrictRepository;
+import com.agri.market.location.repository.StateRepository;
 import com.agri.market.marketprice.dto.HistoricalMarketPriceDto;
 import com.agri.market.marketprice.dto.MarketPriceDto;
 import com.agri.market.marketprice.dto.MarketPriceResponseDto;
 import com.agri.market.marketprice.dto.MarketPriceTrendDto;
+import com.agri.market.marketprice.entity.Commodity;
+import com.agri.market.marketprice.entity.Market;
 import com.agri.market.marketprice.entity.MarketPrice;
 import com.agri.market.marketprice.mapper.MarketPriceMapper;
 import com.agri.market.marketprice.provider.MarketPriceProvider;
+import com.agri.market.marketprice.repository.CommodityRepository;
 import com.agri.market.marketprice.repository.MarketPriceRepository;
+import com.agri.market.marketprice.repository.MarketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,6 +48,10 @@ public class MarketPriceServiceImpl implements MarketPriceService {
     private final MarketPriceRepository marketPriceRepository;
     private final List<MarketPriceProvider> marketPriceProviders;
     private final MarketPriceMapper marketPriceMapper;
+    private final CommodityRepository commodityRepository;
+    private final MarketRepository marketRepository;
+    private final StateRepository stateRepository;
+    private final DistrictRepository districtRepository;
 
     @Override
     public MarketPriceResponseDto getMarketPrices(
@@ -104,13 +116,23 @@ public class MarketPriceServiceImpl implements MarketPriceService {
 
             if (!mandiPrices.isEmpty()) {
 
-                log.info(
-                        "Returning {} market price records fetched from Mandi provider",
-                        mandiPrices.size()
-                );
+                final List<MarketPrice> refreshedLatestPrices =
+                        getLatestPricesSafely();
 
-                return buildDtoResponse(
-                        limitDtoResults(mandiPrices)
+                if (!refreshedLatestPrices.isEmpty()) {
+
+                    log.info(
+                            "Returning {} market price records from database after provider sync",
+                            refreshedLatestPrices.size()
+                    );
+
+                    return buildEntityResponse(
+                            limitEntityResults(refreshedLatestPrices)
+                    );
+                }
+
+                log.info(
+                        "Provider returned market prices, but no records are available in database after sync. Returning latest database fallback"
                 );
             }
 
@@ -163,13 +185,29 @@ public class MarketPriceServiceImpl implements MarketPriceService {
 
         if (!mandiPrices.isEmpty()) {
 
-            log.info(
-                    "Returning {} market price records fetched from Mandi provider",
-                    mandiPrices.size()
-            );
+            final List<MarketPrice> refreshedStoredPrices =
+                    findStoredPricesSafely(
+                            commodity,
+                            state,
+                            district,
+                            market,
+                            date
+                    );
 
-            return buildDtoResponse(
-                    limitDtoResults(mandiPrices)
+            if (!refreshedStoredPrices.isEmpty()) {
+
+                log.info(
+                        "Returning {} market price records from database after provider sync",
+                        refreshedStoredPrices.size()
+                );
+
+                return buildEntityResponse(
+                        limitEntityResults(refreshedStoredPrices)
+                );
+            }
+
+            log.info(
+                    "Provider returned market prices, but no records are available in database after sync. Returning database fallback"
             );
         }
 
@@ -636,13 +674,14 @@ public class MarketPriceServiceImpl implements MarketPriceService {
                         dto.getArrivalDate()
                 );
 
+                final Commodity commodity = resolveOrCreateCommodity(dto.getCommodity());
+                final Market market = resolveOrCreateMarket(dto.getState(), dto.getDistrict(), dto.getMarket());
+
                 final boolean exists =
                         marketPriceRepository
-                                .existsByCommodityAndStateAndDistrictAndMarketAndArrivalDate(
-                                        dto.getCommodity(),
-                                        dto.getState(),
-                                        dto.getDistrict(),
-                                        dto.getMarket(),
+                                .existsByCommodityIdAndMarketIdAndArrivalDate(
+                                        commodity.getId(),
+                                        market.getId(),
                                         dto.getArrivalDate()
                                 );
 
@@ -663,7 +702,7 @@ public class MarketPriceServiceImpl implements MarketPriceService {
                 }
 
                 marketPriceRepository.save(
-                        marketPriceMapper.toEntity(dto)
+                        marketPriceMapper.toEntity(dto, commodity, market)
                 );
 
                 savedCount++;
@@ -714,6 +753,65 @@ public class MarketPriceServiceImpl implements MarketPriceService {
                 duplicateCount,
                 failedCount
         );
+    }
+
+    private Commodity resolveOrCreateCommodity(final String name) {
+        if (!StringUtils.hasText(name)) {
+            throw new BusinessException(ErrorCode.MARKET_PRICE_COMMODITY_REQUIRED);
+        }
+        final String trimmedName = name.trim();
+        return commodityRepository.findByNameIgnoreCase(trimmedName)
+                .orElseGet(() -> commodityRepository.save(
+                        Commodity.builder()
+                                .name(trimmedName)
+                                .build()
+                ));
+    }
+
+    private Market resolveOrCreateMarket(
+            final String stateName,
+            final String districtName,
+            final String marketName
+    ) {
+        final String sName = StringUtils.hasText(stateName) ? stateName.trim() : "Unknown State";
+        final String dName = StringUtils.hasText(districtName) ? districtName.trim() : "Unknown District";
+        final String mName = StringUtils.hasText(marketName) ? marketName.trim() : "Unknown Market";
+
+        State state = stateRepository.findByNameIgnoreCase(sName)
+                .orElseGet(() -> stateRepository.save(
+                        State.builder()
+                                .name(sName)
+                                .code(generateCode(sName, 3))
+                                .countryCode("IN")
+                                .active(true)
+                                .build()
+                ));
+
+        District district = districtRepository.findByStateNameAndDistrictName(state.getName(), dName)
+                .orElseGet(() -> districtRepository.save(
+                        District.builder()
+                                .state(state)
+                                .name(dName)
+                                .code(generateCode(dName, 6))
+                                .active(true)
+                                .build()
+                ));
+
+        return marketRepository.findByDistrictIdAndNameIgnoreCase(district.getId(), mName)
+                .orElseGet(() -> marketRepository.save(
+                        Market.builder()
+                                .district(district)
+                                .name(mName)
+                                .build()
+                ));
+    }
+
+    private String generateCode(final String name, final int length) {
+        final String cleaned = name.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
+        if (cleaned.isEmpty()) {
+            return "UNK";
+        }
+        return cleaned.length() <= length ? cleaned : cleaned.substring(0, length);
     }
 
     private List<MarketPrice> findStoredPricesSafely(
@@ -1075,27 +1173,32 @@ public class MarketPriceServiceImpl implements MarketPriceService {
                         .filter(price -> price != null)
                         .filter(price ->
                                 !StringUtils.hasText(commodity)
-                                        || commodity.equalsIgnoreCase(
-                                        price.getCommodity()
-                                )
+                                        || (price.getCommodity() != null && commodity.equalsIgnoreCase(
+                                        price.getCommodity().getName()
+                                ))
                         )
                         .filter(price ->
                                 !StringUtils.hasText(state)
-                                        || state.equalsIgnoreCase(
-                                        price.getState()
-                                )
+                                        || (price.getMarket() != null
+                                        && price.getMarket().getDistrict() != null
+                                        && price.getMarket().getDistrict().getState() != null
+                                        && state.equalsIgnoreCase(
+                                        price.getMarket().getDistrict().getState().getName()
+                                ))
                         )
                         .filter(price ->
                                 !StringUtils.hasText(district)
-                                        || district.equalsIgnoreCase(
-                                        price.getDistrict()
-                                )
+                                        || (price.getMarket() != null
+                                        && price.getMarket().getDistrict() != null
+                                        && district.equalsIgnoreCase(
+                                        price.getMarket().getDistrict().getName()
+                                ))
                         )
                         .filter(price ->
                                 !StringUtils.hasText(market)
-                                        || market.equalsIgnoreCase(
-                                        price.getMarket()
-                                )
+                                        || (price.getMarket() != null && market.equalsIgnoreCase(
+                                        price.getMarket().getName()
+                                ))
                         )
                         .filter(price ->
                                 price.getArrivalDate() != null

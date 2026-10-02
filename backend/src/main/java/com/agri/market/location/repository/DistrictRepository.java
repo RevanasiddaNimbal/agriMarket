@@ -34,4 +34,16 @@ public interface DistrictRepository extends JpaRepository<District, String> {
             @Param("stateId") String stateId,
             @Param("normalizedName") String normalizedName
     );
+
+    @Query("""
+            SELECT d
+            FROM District d
+            JOIN FETCH d.state s
+            WHERE LOWER(s.name) = LOWER(:stateName)
+              AND LOWER(d.name) = LOWER(:districtName)
+            """)
+    Optional<District> findByStateNameAndDistrictName(
+            @Param("stateName") String stateName,
+            @Param("districtName") String districtName
+    );
 }

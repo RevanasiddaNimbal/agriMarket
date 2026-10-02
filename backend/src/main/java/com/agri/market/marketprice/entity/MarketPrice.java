@@ -19,22 +19,20 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @Table(
         name = "market_prices",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_market_price_unique",
+                        columnNames = {"commodity_id", "market_id", "arrival_date"}
+                )
+        },
         indexes = {
                 @Index(
-                        name = "idx_market_price_commodity",
-                        columnList = "commodity"
+                        name = "idx_market_price_commodity_id",
+                        columnList = "commodity_id"
                 ),
                 @Index(
-                        name = "idx_market_price_state",
-                        columnList = "state"
-                ),
-                @Index(
-                        name = "idx_market_price_district",
-                        columnList = "district"
-                ),
-                @Index(
-                        name = "idx_market_price_market",
-                        columnList = "market"
+                        name = "idx_market_price_market_id",
+                        columnList = "market_id"
                 ),
                 @Index(
                         name = "idx_market_price_arrival_date",
@@ -48,8 +46,13 @@ public class MarketPrice {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "commodity", nullable = false, length = 150)
-    private String commodity;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "commodity_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_market_prices_commodity")
+    )
+    private Commodity commodity;
 
     @Column(name = "variety", length = 150)
     private String variety;
@@ -57,14 +60,13 @@ public class MarketPrice {
     @Column(name = "grade", length = 100)
     private String grade;
 
-    @Column(name = "state", nullable = false, length = 100)
-    private String state;
-
-    @Column(name = "district", nullable = false, length = 100)
-    private String district;
-
-    @Column(name = "market", nullable = false, length = 150)
-    private String market;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "market_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_market_prices_market")
+    )
+    private Market market;
 
     @Column(
             name = "minimum_price",
