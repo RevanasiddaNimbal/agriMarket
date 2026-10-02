@@ -4,6 +4,8 @@ import com.agri.market.product.entity.Product;
 import com.agri.market.product.entity.ProductStatus;
 import org.springframework.data.jpa.domain.Specification;
 
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import java.math.BigDecimal;
 
 public final class ProductSpecification {
@@ -61,10 +63,15 @@ public final class ProductSpecification {
                             .toLowerCase()
                             .split("\\s+");
 
+            final Join<Object, Object> snapshotJoin =
+                    root.join(
+                            "locationSnapshot",
+                            JoinType.LEFT
+                    );
+
             return criteriaBuilder.or(
                     java.util.Arrays.stream(keywords)
                             .map(keyword -> {
-
                                 final String pattern =
                                         "%" + keyword + "%";
 
@@ -89,7 +96,31 @@ public final class ProductSpecification {
                                         ),
                                         criteriaBuilder.like(
                                                 criteriaBuilder.lower(
-                                                        root.get("location")
+                                                        snapshotJoin.get("city")
+                                                ),
+                                                pattern
+                                        ),
+                                        criteriaBuilder.like(
+                                                criteriaBuilder.lower(
+                                                        snapshotJoin.get("district")
+                                                ),
+                                                pattern
+                                        ),
+                                        criteriaBuilder.like(
+                                                criteriaBuilder.lower(
+                                                        snapshotJoin.get("state")
+                                                ),
+                                                pattern
+                                        ),
+                                        criteriaBuilder.like(
+                                                criteriaBuilder.lower(
+                                                        snapshotJoin.get("village")
+                                                ),
+                                                pattern
+                                        ),
+                                        criteriaBuilder.like(
+                                                criteriaBuilder.lower(
+                                                        snapshotJoin.get("addressLine1")
                                                 ),
                                                 pattern
                                         )
@@ -133,15 +164,53 @@ public final class ProductSpecification {
     public static Specification<Product> locationContains(
             final String location
     ) {
-        return (root, query, criteriaBuilder) ->
-                location == null || location.isBlank()
-                        ? null
-                        : criteriaBuilder.like(
-                        criteriaBuilder.lower(
-                                root.get("location")
-                        ),
-                        "%" + location.trim().toLowerCase() + "%"
-                );
+        return (root, query, criteriaBuilder) -> {
+            if (location == null || location.isBlank()) {
+                return null;
+            }
+
+            final Join<Object, Object> snapshotJoin =
+                    root.join(
+                            "locationSnapshot",
+                            JoinType.LEFT
+                    );
+
+            final String pattern =
+                    "%" + location.trim().toLowerCase() + "%";
+
+            return criteriaBuilder.or(
+                    criteriaBuilder.like(
+                            criteriaBuilder.lower(
+                                    snapshotJoin.get("city")
+                            ),
+                            pattern
+                    ),
+                    criteriaBuilder.like(
+                            criteriaBuilder.lower(
+                                    snapshotJoin.get("district")
+                            ),
+                            pattern
+                    ),
+                    criteriaBuilder.like(
+                            criteriaBuilder.lower(
+                                    snapshotJoin.get("state")
+                            ),
+                            pattern
+                    ),
+                    criteriaBuilder.like(
+                            criteriaBuilder.lower(
+                                    snapshotJoin.get("village")
+                            ),
+                            pattern
+                    ),
+                    criteriaBuilder.like(
+                            criteriaBuilder.lower(
+                                    snapshotJoin.get("addressLine1")
+                            ),
+                            pattern
+                    )
+            );
+        };
     }
 
     public static Specification<Product> priceGreaterThanOrEqualTo(

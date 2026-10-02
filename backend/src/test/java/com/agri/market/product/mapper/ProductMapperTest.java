@@ -3,6 +3,9 @@ package com.agri.market.product.mapper;
 import com.agri.market.category.entity.Category;
 import com.agri.market.inventory.entity.Inventory;
 import com.agri.market.inventory.repository.InventoryRepository;
+import com.agri.market.location.entity.District;
+import com.agri.market.location.entity.State;
+import com.agri.market.location.entity.Taluk;
 import com.agri.market.product.dto.ProductImageResponseDto;
 import com.agri.market.product.dto.ProductResponseDto;
 import com.agri.market.product.entity.Product;
@@ -60,11 +63,19 @@ class ProductMapperTest {
                     .id("prod-1")
                     .farmer(farmer)
                     .category(category)
+                    .locationSnapshot(
+                            com.agri.market.product.entity.ProductLocationSnapshot.builder()
+                                    .id("loc-1")
+                                    .city("Bengaluru")
+                                    .district("Bengaluru Urban")
+                                    .state("Karnataka")
+                                    .addressLine1("Bengaluru")
+                                    .build()
+                    )
                     .name("Wheat")
                     .description("High yield wheat")
                     .price(new BigDecimal("100.00"))
                     .unit("KG")
-                    .location("Karnataka")
                     .status("ACTIVE")
                     .build();
 
@@ -106,6 +117,7 @@ class ProductMapperTest {
             assertThat(dto.getName()).isEqualTo("Wheat");
             assertThat(dto.getPrice()).isEqualByComparingTo("100.00");
             assertThat(dto.getQuantity()).isEqualByComparingTo("50.00");
+            assertThat(dto.getLocation()).isEqualTo("Bengaluru");
             assertThat(dto.getImages()).containsExactly(imageDto);
         }
 

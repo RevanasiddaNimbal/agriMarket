@@ -1,7 +1,9 @@
 package com.agri.market.product.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,6 +21,7 @@ import java.math.BigDecimal;
 public class ProductRequestDto {
 
     @JsonProperty("category_id")
+    @JsonAlias({"categoryId", "category_id"})
     @NotBlank(message = "VALIDATION.PRODUCT.CATEGORY_ID.NOT_BLANK")
     @Schema(
             description = "Identifier of the product category",
@@ -94,16 +97,30 @@ public class ProductRequestDto {
     )
     private BigDecimal quantity;
 
+    @JsonProperty("saved_address_id")
+    @JsonAlias({"savedAddressId", "saved_address_id"})
+    @Schema(
+            description = "Identifier of an existing saved address",
+            example = "550e8400-e29b-41d4-a716-446655440002"
+    )
+    private String savedAddressId;
+
+    @JsonProperty("new_location")
+    @JsonAlias({"newLocation", "new_location"})
+    @Valid
+    @Schema(
+            description = "Details of a new product location"
+    )
+    private NewLocationRequestDto newLocation;
+
     @JsonProperty("location")
-    @NotBlank(message = "VALIDATION.PRODUCT.LOCATION.NOT_BLANK")
     @Size(
             max = 100,
             message = "VALIDATION.PRODUCT.LOCATION.SIZE"
     )
     @Schema(
-            description = "Product location",
-            example = "Vijayapura",
-            requiredMode = Schema.RequiredMode.REQUIRED
+            description = "Legacy string location",
+            example = "Vijayapura"
     )
     private String location;
 }

@@ -1,5 +1,6 @@
 package com.agri.market.product.controller;
 
+import com.agri.market.address.dto.AddressResponseDto;
 import com.agri.market.product.dto.ProductRequestDto;
 import com.agri.market.product.dto.ProductResponseDto;
 import com.agri.market.product.service.ProductService;
@@ -277,5 +278,40 @@ public class ProductController {
         );
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "Get product location snapshot",
+            description = "Returns location snapshot details for a specific product."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Product location retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Product not found"
+            )
+    })
+    @GetMapping("/{productId}/location")
+    public ResponseEntity<AddressResponseDto> getProductLocation(
+            @PathVariable final String productId
+    ) {
+
+        log.info(
+                "Request received to fetch location for product: {}",
+                productId
+        );
+
+        final AddressResponseDto response =
+                productService.getProductLocation(productId);
+
+        log.info(
+                "Successfully fetched location for product: {}",
+                productId
+        );
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -36,6 +36,8 @@ export const productService = {
     const payload = {
       ...productData,
       category_id: productData.category_id || productData.categoryId,
+      saved_address_id: productData.saved_address_id || productData.savedAddressId,
+      new_location: productData.new_location || productData.newLocation,
     };
     const response = await apiClient.post('/api/v1/products', payload);
     return response.data;
@@ -46,8 +48,16 @@ export const productService = {
     const payload = {
       ...productData,
       category_id: productData.category_id || productData.categoryId,
+      saved_address_id: productData.saved_address_id || productData.savedAddressId,
+      new_location: productData.new_location || productData.newLocation,
     };
     const response = await apiClient.patch(`/api/v1/products/${productId}`, payload);
+    return response.data;
+  },
+
+  // Get product location snapshot
+  async getProductLocation(productId) {
+    const response = await apiClient.get(`/api/v1/products/${productId}/location`);
     return response.data;
   },
 

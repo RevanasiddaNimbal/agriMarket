@@ -32,6 +32,10 @@ import static jakarta.persistence.GenerationType.UUID;
                 @Index(
                         name = "idx_products_status",
                         columnList = "status"
+                ),
+                @Index(
+                        name = "idx_products_location_snapshot_id",
+                        columnList = "product_location_snapshot_id"
                 )
         }
 )
@@ -81,11 +85,13 @@ public class Product {
     )
     private String unit;
 
-    @Column(
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(
+            name = "product_location_snapshot_id",
             nullable = false,
-            length = 100
+            foreignKey = @ForeignKey(name = "fk_products_location_snapshot")
     )
-    private String location;
+    private ProductLocationSnapshot locationSnapshot;
 
     @Column(
             nullable = false,
@@ -100,7 +106,6 @@ public class Product {
     )
     @Builder.Default
     private List<ProductImage> images = new ArrayList<>();
-
 
     @Column(
             name = "created_at",
@@ -129,5 +134,15 @@ public class Product {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public String getLocation() {
+        if (locationSnapshot == null) {
+            return null;
+        }
+        if (locationSnapshot.getCity() != null) {
+            return locationSnapshot.getCity();
+        }
+        return locationSnapshot.getAddressLine1();
     }
 }

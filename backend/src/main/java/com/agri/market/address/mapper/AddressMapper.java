@@ -140,4 +140,31 @@ public class AddressMapper {
                 .lastModifiedDate(orderAddressSnapshot.getLastModifiedDate())
                 .build();
     }
+
+    public AddressResponseDto toSnapshotResponse(
+            final com.agri.market.product.entity.ProductLocationSnapshot productLocationSnapshot
+    ) {
+        if (productLocationSnapshot == null) {
+            return null;
+        }
+
+        return AddressResponseDto.builder()
+                .id(productLocationSnapshot.getId())
+                .addressLine1(productLocationSnapshot.getAddressLine1())
+                .addressLine2(productLocationSnapshot.getAddressLine2())
+                .village(productLocationSnapshot.getVillage())
+                .city(productLocationSnapshot.getCity())
+                .district(productLocationSnapshot.getDistrict())
+                .state(productLocationSnapshot.getState())
+                .pincode(productLocationSnapshot.getPincode())
+                .country(productLocationSnapshot.getCountry())
+                .locationType(productLocationSnapshot.getLocationType())
+                .latitude(productLocationSnapshot.getLatitude())
+                .longitude(productLocationSnapshot.getLongitude())
+                .addressType(productLocationSnapshot.getAddressType())
+                .defaultAddress(false)
+                .createdDate(productLocationSnapshot.getCreatedDate())
+                .lastModifiedDate(productLocationSnapshot.getLastModifiedDate())
+                .build();
+    }
 }

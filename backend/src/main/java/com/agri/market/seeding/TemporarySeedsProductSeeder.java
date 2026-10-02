@@ -4,6 +4,8 @@ import com.agri.market.category.entity.Category;
 import com.agri.market.category.repository.CategoryRepository;
 import com.agri.market.inventory.entity.Inventory;
 import com.agri.market.inventory.repository.InventoryRepository;
+import com.agri.market.location.entity.Taluk;
+import com.agri.market.location.repository.TalukRepository;
 import com.agri.market.product.entity.Product;
 import com.agri.market.product.entity.ProductImage;
 import com.agri.market.product.repository.ProductImageRepository;
@@ -34,6 +36,7 @@ public class TemporarySeedsProductSeeder {
     private final ProductImageRepository productImageRepository;
     private final InventoryRepository inventoryRepository;
     private final UserRepository userRepository;
+    private final TalukRepository talukRepository;
 
 //    implements CommandLineRunner
 //    @Override
@@ -236,6 +239,18 @@ public class TemporarySeedsProductSeeder {
                 continue;
             }
 
+            final Taluk taluk = talukRepository.findAll().stream().findFirst().orElse(null);
+            final com.agri.market.product.entity.ProductLocationSnapshot locationSnapshot =
+                    com.agri.market.product.entity.ProductLocationSnapshot.builder()
+                            .addressLine1(seed.location())
+                            .city("Dharwad")
+                            .district("Dharwad")
+                            .state("Karnataka")
+                            .pincode("580001")
+                            .country("India")
+                            .taluk(taluk)
+                            .build();
+
             final Product product =
                     Product.builder()
                             .farmer(farmer)
@@ -244,7 +259,7 @@ public class TemporarySeedsProductSeeder {
                             .description(seed.description())
                             .price(seed.price())
                             .unit(seed.unit())
-                            .location(seed.location())
+                            .locationSnapshot(locationSnapshot)
                             .status("ACTIVE")
                             .build();
 

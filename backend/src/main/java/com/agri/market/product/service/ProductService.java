@@ -1,5 +1,6 @@
 package com.agri.market.product.service;
 
+import com.agri.market.address.dto.AddressResponseDto;
 import com.agri.market.product.dto.ProductRequestDto;
 import com.agri.market.product.dto.ProductResponseDto;
 
@@ -15,6 +16,10 @@ public interface ProductService {
     List<ProductResponseDto> getAllProducts();
 
     ProductResponseDto getProductById(
+            String productId
+    );
+
+    AddressResponseDto getProductLocation(
             String productId
     );
 
