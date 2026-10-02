@@ -7,6 +7,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -55,20 +57,50 @@ public class CropInfo {
     @Column(name = "harvesting_info", columnDefinition = "TEXT")
     private String harvestingInfo;
 
-    @Column(name = "soil_requirements", columnDefinition = "TEXT")
-    private String soilRequirements;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "crop_info_soil_requirements",
+            joinColumns = @JoinColumn(
+                    name = "crop_info_id",
+                    foreignKey = @ForeignKey(name = "fk_crop_info_soil_requirements_crop")
+            )
+    )
+    @Column(name = "requirement", nullable = false, columnDefinition = "TEXT")
+    @OrderBy("requirement ASC")
+    @Builder.Default
+    private Set<String> soilRequirements = new LinkedHashSet<>();
 
     @Column(name = "water_requirements", columnDefinition = "TEXT")
     private String waterRequirements;
 
-    @Column(name = "sunlight_requirements", columnDefinition = "TEXT")
-    private String sunlightRequirements;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "crop_info_sunlight_requirements",
+            joinColumns = @JoinColumn(
+                    name = "crop_info_id",
+                    foreignKey = @ForeignKey(name = "fk_crop_info_sunlight_requirements_crop")
+            )
+    )
+    @Column(name = "requirement", nullable = false, columnDefinition = "TEXT")
+    @OrderBy("requirement ASC")
+    @Builder.Default
+    private Set<String> sunlightRequirements = new LinkedHashSet<>();
 
     @Column(name = "temperature_requirements", columnDefinition = "TEXT")
     private String temperatureRequirements;
 
-    @Column(name = "common_pests", columnDefinition = "TEXT")
-    private String commonPests;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "crop_info_common_pests",
+            joinColumns = @JoinColumn(
+                    name = "crop_info_id",
+                    foreignKey = @ForeignKey(name = "fk_crop_info_common_pests_crop")
+            )
+    )
+    @Column(name = "pest", nullable = false, columnDefinition = "TEXT")
+    @OrderBy("pest ASC")
+    @Builder.Default
+    private Set<String> commonPests = new LinkedHashSet<>();
 
     @Column(name = "common_diseases", columnDefinition = "TEXT")
     private String commonDiseases;

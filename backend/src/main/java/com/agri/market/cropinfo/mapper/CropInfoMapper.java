@@ -9,7 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -33,11 +36,11 @@ public class CropInfoMapper {
                 .sowingInfo(entity.getSowingInfo())
                 .growingDuration(entity.getGrowingDuration())
                 .harvestingInfo(entity.getHarvestingInfo())
-                .soilRequirements(entity.getSoilRequirements())
+                .soilRequirements(joinValues(entity.getSoilRequirements()))
                 .waterRequirements(entity.getWaterRequirements())
-                .sunlightRequirements(entity.getSunlightRequirements())
+                .sunlightRequirements(joinValues(entity.getSunlightRequirements()))
                 .temperatureRequirements(entity.getTemperatureRequirements())
-                .commonPests(entity.getCommonPests())
+                .commonPests(joinValues(entity.getCommonPests()))
                 .commonDiseases(entity.getCommonDiseases())
                 .uses(entity.getUses())
                 .build();
@@ -108,9 +111,9 @@ public class CropInfoMapper {
                         localData.harvestingInfo(),
                         "Harvest at the recommended maturity stage according to the crop and intended use."
                 ))
-                .soilRequirements(firstAvailable(
+                .soilRequirements(firstAvailableValues(
                         null,
-                        joinValues(response.getSoil()),
+                        response.getSoil(),
                         "Soil requirements vary by crop variety and local growing conditions."
                 ))
                 .waterRequirements(firstAvailable(
@@ -118,9 +121,9 @@ public class CropInfoMapper {
                         response.getWatering(),
                         "Water requirements vary by crop, growth stage and local conditions."
                 ))
-                .sunlightRequirements(firstAvailable(
+                .sunlightRequirements(firstAvailableValues(
                         null,
-                        joinValues(response.getSunlight()),
+                        response.getSunlight(),
                         "Sunlight requirements vary by crop variety and growing conditions."
                 ))
                 .temperatureRequirements(firstAvailable(
@@ -128,9 +131,9 @@ public class CropInfoMapper {
                         localData.temperatureRequirements(),
                         "Suitable temperature varies by crop variety and growing conditions."
                 ))
-                .commonPests(firstAvailable(
+                .commonPests(firstAvailableValues(
                         null,
-                        joinValues(response.getPest_susceptibility()),
+                        response.getPest_susceptibility(),
                         "Pest occurrence varies by crop, variety, season and local conditions."
                 ))
                 .commonDiseases(firstAvailable(
@@ -213,9 +216,9 @@ public class CropInfoMapper {
                 "Harvest at the recommended maturity stage according to the crop and intended use."
         ));
 
-        entity.setSoilRequirements(firstAvailable(
+        entity.setSoilRequirements(firstAvailableValues(
                 entity.getSoilRequirements(),
-                joinValues(response.getSoil()),
+                response.getSoil(),
                 "Soil requirements vary by crop variety and local growing conditions."
         ));
 
@@ -225,9 +228,9 @@ public class CropInfoMapper {
                 "Water requirements vary by crop, growth stage and local conditions."
         ));
 
-        entity.setSunlightRequirements(firstAvailable(
+        entity.setSunlightRequirements(firstAvailableValues(
                 entity.getSunlightRequirements(),
-                joinValues(response.getSunlight()),
+                response.getSunlight(),
                 "Sunlight requirements vary by crop variety and growing conditions."
         ));
 
@@ -237,9 +240,9 @@ public class CropInfoMapper {
                 "Suitable temperature varies by crop variety and growing conditions."
         ));
 
-        entity.setCommonPests(firstAvailable(
+        entity.setCommonPests(firstAvailableValues(
                 entity.getCommonPests(),
-                joinValues(response.getPest_susceptibility()),
+                response.getPest_susceptibility(),
                 "Pest occurrence varies by crop, variety, season and local conditions."
         ));
 
@@ -322,7 +325,42 @@ public class CropInfoMapper {
         return response.getDefault_image().getThumbnail();
     }
 
-    private String joinValues(List<String> values) {
+    private Set<String> firstAvailableValues(
+            Set<String> existing,
+            List<String> values,
+            String fallback
+    ) {
+        if (existing != null && !existing.isEmpty()) {
+            return existing;
+        }
+
+        Set<String> normalizedValues = normalizeValues(values);
+        if (!normalizedValues.isEmpty()) {
+            return normalizedValues;
+        }
+
+        Set<String> fallbackValues = normalizeValues(List.of(fallback));
+        return fallbackValues.isEmpty()
+                ? Set.of()
+                : fallbackValues;
+    }
+
+    private Set<String> normalizeValues(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return Set.of();
+        }
+
+        Set<String> normalized = new LinkedHashSet<>();
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                normalized.add(value.trim());
+            }
+        }
+
+        return normalized;
+    }
+
+    private String joinValues(Collection<String> values) {
         if (values == null || values.isEmpty()) {
             return null;
         }

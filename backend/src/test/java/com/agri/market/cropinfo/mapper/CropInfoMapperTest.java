@@ -12,6 +12,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.LinkedHashSet;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,8 +40,10 @@ class CropInfoMapperTest {
                     .imageUrl("https://cloud.com/rice.jpg")
                     .lifeCycle("ANNUAL")
                     .growthStages("Seedling, Vegetative, Ripening")
-                    .soilRequirements("Clay loam")
+                    .soilRequirements(new LinkedHashSet<>(java.util.List.of("Clay loam")))
                     .waterRequirements("High")
+                    .sunlightRequirements(new LinkedHashSet<>(java.util.List.of("Full Sun")))
+                    .commonPests(new LinkedHashSet<>(java.util.List.of("Aphids", "Whiteflies")))
                     .build();
 
             final CropInfoResponseDto dto = cropInfoMapper.toResponseDto(entity);
