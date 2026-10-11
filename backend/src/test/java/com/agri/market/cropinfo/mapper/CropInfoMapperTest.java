@@ -44,6 +44,8 @@ class CropInfoMapperTest {
                     .waterRequirements("High")
                     .sunlightRequirements(new LinkedHashSet<>(java.util.List.of("Full Sun")))
                     .commonPests(new LinkedHashSet<>(java.util.List.of("Aphids", "Whiteflies")))
+                    .commonDiseases(new LinkedHashSet<>(java.util.List.of("Blast")))
+                    .uses(new LinkedHashSet<>(java.util.List.of("Food")))
                     .build();
 
             final CropInfoResponseDto dto = cropInfoMapper.toResponseDto(entity);

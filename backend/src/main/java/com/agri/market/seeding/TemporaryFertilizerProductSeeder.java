@@ -255,8 +255,6 @@ public class TemporaryFertilizerProductSeeder {
                     com.agri.market.product.entity.ProductLocationSnapshot.builder()
                             .addressLine1(fertilizer.location())
                             .city("Dharwad")
-                            .district("Dharwad")
-                            .state("Karnataka")
                             .pincode("580001")
                             .country("India")
                             .taluk(taluk)

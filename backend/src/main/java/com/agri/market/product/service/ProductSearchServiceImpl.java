@@ -247,16 +247,15 @@ public class ProductSearchServiceImpl
             final String sortBy
     ) {
         if (sortBy == null || sortBy.isBlank()) {
-            return "createdAt";
+            return "createdDate";
         }
 
         return switch (sortBy.trim()) {
             case "name" -> "name";
             case "price" -> "price";
-            case "quantity" -> "quantity";
-            case "createdAt" -> "createdAt";
-            case "updatedAt" -> "updatedAt";
-            default -> "createdAt";
+            case "createdAt", "created_at", "createdDate", "created_date" -> "createdDate";
+            case "updatedAt", "updated_at", "lastModifiedDate", "last_modified_date" -> "lastModifiedDate";
+            default -> "createdDate";
         };
     }
 

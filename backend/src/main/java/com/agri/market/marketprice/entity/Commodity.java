@@ -42,12 +42,12 @@ public class Commodity {
     private String name;
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_date", nullable = false, updatable = false)
+    private LocalDateTime createdDate;
 
     @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(name = "last_modified_date", nullable = false)
+    private LocalDateTime lastModifiedDate;
 
     @OneToMany(
             mappedBy = "commodity",

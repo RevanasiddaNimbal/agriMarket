@@ -28,6 +28,7 @@ public class CropInfo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, updatable = false)
     private String id;
 
     @Column(name = "crop_name", nullable = false, unique = true, length = 100)
@@ -102,17 +103,60 @@ public class CropInfo {
     @Builder.Default
     private Set<String> commonPests = new LinkedHashSet<>();
 
-    @Column(name = "common_diseases", columnDefinition = "TEXT")
-    private String commonDiseases;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "crop_info_common_diseases",
+            joinColumns = @JoinColumn(
+                    name = "crop_info_id",
+                    foreignKey = @ForeignKey(name = "fk_crop_info_common_diseases_crop")
+            )
+    )
+    @Column(name = "disease", nullable = false, columnDefinition = "TEXT")
+    @OrderBy("disease ASC")
+    @Builder.Default
+    private Set<String> commonDiseases = new LinkedHashSet<>();
 
-    @Column(name = "uses", columnDefinition = "TEXT")
-    private String uses;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "crop_info_uses",
+            joinColumns = @JoinColumn(
+                    name = "crop_info_id",
+                    foreignKey = @ForeignKey(name = "fk_crop_info_uses_crop")
+            )
+    )
+    @Column(name = "use_case", nullable = false, columnDefinition = "TEXT")
+    @OrderBy("use_case ASC")
+    @Builder.Default
+    private Set<String> uses = new LinkedHashSet<>();
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(
+            name = "created_date",
+            nullable = false,
+            updatable = false
+    )
+    private LocalDateTime createdDate;
 
     @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(
+            name = "last_modified_date",
+            nullable = false
+    )
+    private LocalDateTime lastModifiedDate;
+
+    public LocalDateTime getCreatedAt() {
+        return createdDate;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdDate = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return lastModifiedDate;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.lastModifiedDate = updatedAt;
+    }
 }

@@ -80,18 +80,18 @@ public class State {
 
     @CreatedDate
     @Column(
-            name = "created_at",
+            name = "created_date",
             nullable = false,
             updatable = false
     )
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 
     @LastModifiedDate
     @Column(
-            name = "updated_at",
+            name = "last_modified_date",
             nullable = false
     )
-    private LocalDateTime updatedAt;
+    private LocalDateTime lastModifiedDate;
 
     @OneToMany(
             mappedBy = "state",

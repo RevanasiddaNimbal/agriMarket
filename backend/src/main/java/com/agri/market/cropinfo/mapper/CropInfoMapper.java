@@ -41,8 +41,8 @@ public class CropInfoMapper {
                 .sunlightRequirements(joinValues(entity.getSunlightRequirements()))
                 .temperatureRequirements(entity.getTemperatureRequirements())
                 .commonPests(joinValues(entity.getCommonPests()))
-                .commonDiseases(entity.getCommonDiseases())
-                .uses(entity.getUses())
+                .commonDiseases(joinValues(entity.getCommonDiseases()))
+                .uses(joinValues(entity.getUses()))
                 .build();
     }
 
@@ -136,14 +136,14 @@ public class CropInfoMapper {
                         response.getPest_susceptibility(),
                         "Pest occurrence varies by crop, variety, season and local conditions."
                 ))
-                .commonDiseases(firstAvailable(
+                .commonDiseases(firstAvailableValues(
                         null,
-                        localData.commonDiseases(),
+                        localData.commonDiseases() != null ? java.util.Arrays.asList(localData.commonDiseases().split("\\s*,\\s*")) : java.util.List.of(),
                         "Disease occurrence varies with crop, variety, weather and growing conditions."
                 ))
-                .uses(firstAvailable(
+                .uses(firstAvailableValues(
                         null,
-                        localData.uses(),
+                        localData.uses() != null ? java.util.Arrays.asList(localData.uses().split("\\s*,\\s*")) : java.util.List.of(),
                         "Uses vary depending on the crop, variety and agricultural purpose."
                 ))
                 .build();
@@ -246,15 +246,15 @@ public class CropInfoMapper {
                 "Pest occurrence varies by crop, variety, season and local conditions."
         ));
 
-        entity.setCommonDiseases(firstAvailable(
+        entity.setCommonDiseases(firstAvailableValues(
                 entity.getCommonDiseases(),
-                localData.commonDiseases(),
+                localData.commonDiseases() != null ? java.util.Arrays.asList(localData.commonDiseases().split("\\s*,\\s*")) : java.util.List.of(),
                 "Disease occurrence varies with crop, variety, weather and growing conditions."
         ));
 
-        entity.setUses(firstAvailable(
+        entity.setUses(firstAvailableValues(
                 entity.getUses(),
-                localData.uses(),
+                localData.uses() != null ? java.util.Arrays.asList(localData.uses().split("\\s*,\\s*")) : java.util.List.of(),
                 "Uses vary depending on the crop, variety and agricultural purpose."
         ));
     }

@@ -300,11 +300,13 @@ class ProductServiceImplTest {
 
         @Test
         void shouldReturnLocationResponseWhenFound() {
+            final State state = State.builder().name("Karnataka").build();
+            final District district = District.builder().name("Dharwad").state(state).build();
+            final Taluk taluk = Taluk.builder().name("Hubli").district(district).build();
             final ProductLocationSnapshot snapshot = ProductLocationSnapshot.builder()
                     .addressLine1("Navanagar")
                     .city("Hubli")
-                    .district("Dharwad")
-                    .state("Karnataka")
+                    .taluk(taluk)
                     .build();
             final Product product = Product.builder().id("p1").locationSnapshot(snapshot).build();
             final AddressResponseDto addressDto = AddressResponseDto.builder().city("Hubli").build();

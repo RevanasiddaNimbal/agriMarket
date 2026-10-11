@@ -4,13 +4,14 @@ import com.agri.market.category.entity.Category;
 import com.agri.market.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import static jakarta.persistence.GenerationType.UUID;
 
 @Getter
 @Setter
@@ -18,6 +19,7 @@ import static jakarta.persistence.GenerationType.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(
         name = "products",
         indexes = {
@@ -42,7 +44,7 @@ import static jakarta.persistence.GenerationType.UUID;
 public class Product {
 
     @Id
-    @GeneratedValue(strategy = UUID)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false)
     private String id;
 
@@ -107,33 +109,42 @@ public class Product {
     @Builder.Default
     private List<ProductImage> images = new ArrayList<>();
 
+    @CreatedDate
     @Column(
-            name = "created_at",
+            name = "created_date",
             nullable = false,
             updatable = false
     )
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 
+    @LastModifiedDate
     @Column(
-            name = "updated_at",
+            name = "last_modified_date",
             nullable = false
     )
-    private LocalDateTime updatedAt;
+    private LocalDateTime lastModifiedDate;
 
     @PrePersist
     protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-
         if (status == null) {
             status = ProductStatus.ACTIVE.name();
         }
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    public LocalDateTime getCreatedAt() {
+        return createdDate;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdDate = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return lastModifiedDate;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.lastModifiedDate = updatedAt;
     }
 
     public String getLocation() {

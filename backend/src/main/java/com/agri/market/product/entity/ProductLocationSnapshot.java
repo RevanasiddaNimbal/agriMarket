@@ -46,20 +46,6 @@ public class ProductLocationSnapshot extends BaseEntity {
     private String city;
 
     @Column(
-            name = "district",
-            nullable = false,
-            length = 100
-    )
-    private String district;
-
-    @Column(
-            name = "state",
-            nullable = false,
-            length = 100
-    )
-    private String state;
-
-    @Column(
             name = "pincode",
             nullable = false,
             length = 10
@@ -113,4 +99,14 @@ public class ProductLocationSnapshot extends BaseEntity {
             foreignKey = @ForeignKey(name = "fk_product_location_snapshot_taluk")
     )
     private Taluk taluk;
+
+    public String getDistrict() {
+        return taluk != null && taluk.getDistrict() != null ? taluk.getDistrict().getName() : null;
+    }
+
+    public String getState() {
+        return taluk != null && taluk.getDistrict() != null && taluk.getDistrict().getState() != null
+                ? taluk.getDistrict().getState().getName()
+                : null;
+    }
 }

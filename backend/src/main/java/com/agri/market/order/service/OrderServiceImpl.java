@@ -148,12 +148,11 @@ public class OrderServiceImpl implements OrderService {
         final OrderAddressSnapshot addressSnapshot =
                 OrderAddressSnapshot.builder()
                         .order(order)
+                        .taluk(address.getTaluk())
                         .addressLine1(address.getAddressLine1())
                         .addressLine2(address.getAddressLine2())
                         .village(address.getVillage())
                         .city(address.getCity())
-                        .district(address.getDistrict())
-                        .state(address.getState())
                         .pincode(address.getPincode())
                         .country(address.getCountry())
                         .latitude(address.getLatitude())

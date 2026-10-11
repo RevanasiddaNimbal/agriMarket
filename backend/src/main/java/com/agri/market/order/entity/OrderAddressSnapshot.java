@@ -3,8 +3,10 @@ package com.agri.market.order.entity;
 import com.agri.market.address.entity.AddressType;
 import com.agri.market.address.entity.LocationType;
 import com.agri.market.common.entity.BaseEntity;
+import com.agri.market.location.entity.Taluk;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
@@ -15,12 +17,16 @@ import java.math.BigDecimal;
                 @Index(
                         name = "idx_order_address_snapshots_order_id",
                         columnList = "order_id"
+                ),
+                @Index(
+                        name = "idx_order_address_snapshots_taluk_id",
+                        columnList = "taluk_id"
                 )
         }
 )
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderAddressSnapshot extends BaseEntity {
@@ -33,6 +39,13 @@ public class OrderAddressSnapshot extends BaseEntity {
             foreignKey = @ForeignKey(name = "fk_order_address_snapshot_order")
     )
     private Order order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "taluk_id",
+            foreignKey = @ForeignKey(name = "fk_order_address_snapshot_taluk")
+    )
+    private Taluk taluk;
 
     @Column(
             name = "address_line1",
@@ -59,20 +72,6 @@ public class OrderAddressSnapshot extends BaseEntity {
             length = 100
     )
     private String city;
-
-    @Column(
-            name = "district",
-            nullable = false,
-            length = 100
-    )
-    private String district;
-
-    @Column(
-            name = "state",
-            nullable = false,
-            length = 100
-    )
-    private String state;
 
     @Column(
             name = "pincode",
@@ -120,4 +119,14 @@ public class OrderAddressSnapshot extends BaseEntity {
     )
     @Builder.Default
     private AddressType addressType = AddressType.HOME;
+
+    public String getDistrict() {
+        return taluk != null && taluk.getDistrict() != null ? taluk.getDistrict().getName() : null;
+    }
+
+    public String getState() {
+        return taluk != null && taluk.getDistrict() != null && taluk.getDistrict().getState() != null
+                ? taluk.getDistrict().getState().getName()
+                : null;
+    }
 }

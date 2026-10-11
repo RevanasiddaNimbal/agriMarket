@@ -59,6 +59,10 @@ class ProductMapperTest {
                     .name("Seeds")
                     .build();
 
+            final State state = State.builder().name("Karnataka").build();
+            final District district = District.builder().name("Bengaluru Urban").state(state).build();
+            final Taluk taluk = Taluk.builder().name("Bengaluru").district(district).build();
+
             final Product product = Product.builder()
                     .id("prod-1")
                     .farmer(farmer)
@@ -67,8 +71,7 @@ class ProductMapperTest {
                             com.agri.market.product.entity.ProductLocationSnapshot.builder()
                                     .id("loc-1")
                                     .city("Bengaluru")
-                                    .district("Bengaluru Urban")
-                                    .state("Karnataka")
+                                    .taluk(taluk)
                                     .addressLine1("Bengaluru")
                                     .build()
                     )

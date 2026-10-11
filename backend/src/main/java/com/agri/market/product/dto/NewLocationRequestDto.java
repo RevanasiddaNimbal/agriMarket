@@ -20,6 +20,10 @@ import java.math.BigDecimal;
 @Schema(description = "Request data for providing a new product location")
 public class NewLocationRequestDto {
 
+    @JsonProperty("talukId")
+    @Schema(description = "Taluk ID from the normalized location hierarchy", example = "taluk-uuid")
+    private String talukId;
+
     @JsonProperty("addressLine1")
     @Size(max = 200, message = "VALIDATION.ADDRESS.ADDRESS_LINE1.SIZE")
     @Schema(description = "Primary address line", example = "Navanagar")

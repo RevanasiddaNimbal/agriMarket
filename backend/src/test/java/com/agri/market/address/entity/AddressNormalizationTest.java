@@ -46,11 +46,14 @@ class AddressNormalizationTest {
 
     @Test
     void shouldPreserveImmutableOrderAddressSnapshotBehavior() {
+        final State state = State.builder().id("s-700").name("Karnataka").code("KA").build();
+        final District district = District.builder().id("d-700").name("Vijayapura").code("KA-VJP").state(state).build();
+        final Taluk taluk = Taluk.builder().id("t-700").name("Vijayapura").code("KA-VJP-01").district(district).build();
+
         final OrderAddressSnapshot snapshot = OrderAddressSnapshot.builder()
                 .addressLine1("Historical Line 1")
                 .city("Historical City")
-                .district("Historical District")
-                .state("Historical State")
+                .taluk(taluk)
                 .pincode("586101")
                 .country("India")
                 .locationType(LocationType.MANUAL)
@@ -59,7 +62,7 @@ class AddressNormalizationTest {
 
         final AddressResponseDto response = mapper.toSnapshotResponse(snapshot);
         assertThat(response.getAddressLine1()).isEqualTo("Historical Line 1");
-        assertThat(response.getDistrict()).isEqualTo("Historical District");
-        assertThat(response.getState()).isEqualTo("Historical State");
+        assertThat(response.getDistrict()).isEqualTo("Vijayapura");
+        assertThat(response.getState()).isEqualTo("Karnataka");
     }
 }

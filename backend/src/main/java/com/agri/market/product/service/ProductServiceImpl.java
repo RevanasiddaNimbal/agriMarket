@@ -311,8 +311,6 @@ public class ProductServiceImpl implements ProductService {
                     .addressLine2(address.getAddressLine2())
                     .village(address.getVillage())
                     .city(address.getCity() != null ? address.getCity() : "Unknown")
-                    .district(address.getDistrict() != null ? address.getDistrict() : "Unknown")
-                    .state(address.getState() != null ? address.getState() : "Karnataka")
                     .pincode(address.getPincode() != null ? address.getPincode() : "580001")
                     .country(address.getCountry() != null ? address.getCountry() : "India")
                     .latitude(address.getLatitude())
@@ -329,11 +327,12 @@ public class ProductServiceImpl implements ProductService {
                     ? dto.getAddressLine1()
                     : (dto.getCity() != null ? dto.getCity() : "Location");
             final String city = dto.getCity() != null && !dto.getCity().isBlank() ? dto.getCity() : "Unknown";
-            final String district = dto.getDistrict() != null && !dto.getDistrict().isBlank() ? dto.getDistrict() : "Unknown";
-            final String state = dto.getState() != null && !dto.getState().isBlank() ? dto.getState() : "Karnataka";
 
             Taluk taluk = null;
-            if (dto.getCity() != null && !dto.getCity().isBlank()) {
+            if (dto.getTalukId() != null) {
+                taluk = talukRepository.findById(dto.getTalukId()).orElse(null);
+            }
+            if (taluk == null && dto.getCity() != null && !dto.getCity().isBlank()) {
                 final String norm = normalizeLocation(dto.getCity());
                 final List<Taluk> taluks = talukRepository.findActiveByNormalizedName(norm);
                 if (!taluks.isEmpty()) {
@@ -346,8 +345,6 @@ public class ProductServiceImpl implements ProductService {
                     .addressLine2(dto.getAddressLine2())
                     .village(dto.getVillage())
                     .city(city)
-                    .district(district)
-                    .state(state)
                     .pincode(dto.getPincode() != null ? dto.getPincode() : "580001")
                     .country(dto.getCountry() != null ? dto.getCountry() : "India")
                     .latitude(dto.getLatitude())
@@ -367,14 +364,9 @@ public class ProductServiceImpl implements ProductService {
                 taluk = taluks.getFirst();
             }
 
-            final String district = taluk != null && taluk.getDistrict() != null ? taluk.getDistrict().getName() : "Unknown";
-            final String state = taluk != null && taluk.getDistrict() != null && taluk.getDistrict().getState() != null ? taluk.getDistrict().getState().getName() : "Karnataka";
-
             return ProductLocationSnapshot.builder()
                     .addressLine1(locStr)
                     .city(taluk != null ? taluk.getName() : locStr)
-                    .district(district)
-                    .state(state)
                     .pincode("580001")
                     .country("India")
                     .locationType(LocationType.MANUAL)

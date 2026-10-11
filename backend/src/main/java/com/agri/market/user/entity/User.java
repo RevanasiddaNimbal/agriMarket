@@ -84,12 +84,28 @@ public class User implements UserDetails {
     private String profilePictureUrl = DEFAULT_PROFILE_PICTURE_URL;
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_date", nullable = false, updatable = false)
+    private LocalDateTime createdDate;
 
     @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(name = "last_modified_date", nullable = false)
+    private LocalDateTime lastModifiedDate;
+
+    public LocalDateTime getCreatedAt() {
+        return createdDate;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdDate = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return lastModifiedDate;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.lastModifiedDate = updatedAt;
+    }
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

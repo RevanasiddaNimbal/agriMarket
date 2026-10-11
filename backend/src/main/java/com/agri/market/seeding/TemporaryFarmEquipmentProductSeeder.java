@@ -293,8 +293,6 @@ public class TemporaryFarmEquipmentProductSeeder {
                     com.agri.market.product.entity.ProductLocationSnapshot.builder()
                             .addressLine1(equipmentData.location())
                             .city("Dharwad")
-                            .district("Dharwad")
-                            .state("Karnataka")
                             .pincode("580001")
                             .country("India")
                             .taluk(taluk)
