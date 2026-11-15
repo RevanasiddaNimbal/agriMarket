@@ -386,118 +386,131 @@ export function HomePage() {
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-20 animate-fade-in">
-      {/* 1. HERO BANNER — Vibrant lush green crop field with 'Sell Your Product' */}
-      <section className="relative overflow-hidden bg-[#15803d] text-white pt-12 sm:pt-16 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8 shadow-soft-lg">
-        {/* Subtle decorative curves in background */}
-        <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-15 pointer-events-none">
-          <svg viewBox="0 0 500 500" className="w-full h-full object-cover">
-            <circle cx="350" cy="250" r="180" fill="none" stroke="currentColor" strokeWidth="60" />
-            <circle cx="350" cy="250" r="280" fill="none" stroke="currentColor" strokeWidth="40" />
-            <circle cx="350" cy="250" r="380" fill="none" stroke="currentColor" strokeWidth="20" />
-          </svg>
+      {/* 1. HERO BANNER — Full-width background using exact /homePage.png with subtle dark-green overlay and translucent AGRICULTURE text */}
+      <section
+        className="relative w-full max-w-full overflow-hidden bg-[#04200f] text-white min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] lg:max-h-[860px] xl:max-h-[920px] flex flex-col justify-between shadow-soft-xl bg-cover bg-no-repeat bg-[center_right] sm:bg-center"
+        style={{
+          backgroundImage: "url('/homePage.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Subtle dark-green gradient overlay ensuring text readability while keeping the lush fields and farmer vibrant */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#031d0d]/85 via-[#031d0d]/55 to-transparent sm:from-[#031d0d]/80 sm:via-[#031d0d]/45 sm:to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#021509]/80 via-transparent to-[#021509]/30 pointer-events-none" />
+
+        {/* Large translucent AGRICULTURE watermark text */}
+        <div
+          aria-hidden="true"
+          className="absolute bottom-4 sm:bottom-6 left-0 right-0 flex justify-center pointer-events-none select-none overflow-hidden z-0 opacity-20 sm:opacity-25"
+        >
+          <span className="text-6xl sm:text-8xl md:text-[11rem] lg:text-[14rem] font-black uppercase tracking-[0.2em] sm:tracking-[0.25em] text-transparent [-webkit-text-stroke:1.5px_rgba(255,255,255,0.7)] drop-shadow-md whitespace-nowrap">
+            AGRICULTURE
+          </span>
         </div>
 
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Left Content */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              {/* Top pill badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/25 text-white text-xs font-semibold backdrop-blur-md"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Direct from Indian farmers</span>
-              </motion.div>
+        {/* Hero Content Container — structured to fit laptop viewport comfortably */}
+        <div className="max-w-7xl mx-auto w-full h-full flex flex-col justify-between relative z-10 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+          <div className="max-w-2xl lg:max-w-3xl space-y-4 sm:space-y-6 text-center sm:text-left my-auto pt-2 sm:pt-4">
+            {/* Top pill badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-emerald-950/80 border border-emerald-400/40 text-emerald-100 text-xs sm:text-sm font-semibold backdrop-blur-md shadow-soft-xs hover:border-emerald-400/60 transition-colors"
+            >
+              <Sparkles className="w-4 h-4 text-[#d4f938]" />
+              <span>Direct from Indian farmers</span>
+            </motion.div>
 
-              {/* Main Heading with simple, formal text animation */}
-              <motion.h1
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="text-3xl sm:text-5xl xl:text-6xl font-black tracking-tight leading-[1.15] text-white"
-              >
-                Buy Fresh Produce Directly from Farmers
-              </motion.h1>
+            {/* Main Heading with modern premium typography */}
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight leading-[1.08] text-white drop-shadow-md font-['Poppins',sans-serif]"
+            >
+              Buy Fresh Produce Directly from Farmers
+            </motion.h1>
 
-              {/* Subheading */}
-              <motion.p
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-sm sm:text-base md:text-lg text-emerald-50 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal"
-              >
-                No middlemen. No markups. Just fresh, quality agricultural products from farms to your doorstep.
-              </motion.p>
+            {/* Subheading */}
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-sm sm:text-base md:text-lg text-emerald-50/90 max-w-xl sm:max-w-2xl leading-relaxed font-normal drop-shadow-sm mx-auto sm:mx-0"
+            >
+              No middlemen. No markups. Just fresh, quality agricultural products from farms to your doorstep.
+            </motion.p>
 
-              {/* Action Buttons: Browse Products & Sell Your Product */}
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2"
+            {/* Action Buttons: Browse Products & Sell Your Product */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 sm:gap-4 pt-1 sm:pt-2"
+            >
+              <button
+                type="button"
+                onClick={() => navigate('/marketplace')}
+                className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 bg-white hover:bg-[#d4f938] text-emerald-950 font-extrabold text-sm sm:text-base rounded-full shadow-soft-md hover:shadow-soft-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 group cursor-pointer"
               >
-                <button
-                  type="button"
-                  onClick={() => navigate('/marketplace')}
-                  className="w-full sm:w-auto px-7 py-3.5 bg-white text-emerald-900 font-extrabold text-sm sm:text-base rounded-xl shadow-soft-sm hover:bg-emerald-50 hover:shadow-soft-md transition-all active:scale-[0.99]"
-                >
-                  Browse Products
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAuthNavigation('/sell')}
-                  className="w-full sm:w-auto px-7 py-3.5 border-2 border-white/80 text-white font-extrabold text-sm sm:text-base rounded-xl hover:bg-white/15 transition-all active:scale-[0.99]"
-                >
-                  Sell Your Product
-                </button>
-              </motion.div>
+                <span>Browse Products</span>
+                <ArrowRight className="w-4 h-4 text-emerald-900 group-hover:translate-x-1 transition-transform duration-300" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleAuthNavigation('/sell')}
+                className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 bg-white/10 hover:bg-white/20 border-2 border-white/80 hover:border-white text-white font-extrabold text-sm sm:text-base rounded-full backdrop-blur-md shadow-soft-xs hover:shadow-soft-md hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Sell Your Product</span>
+              </button>
+            </motion.div>
+          </div>
 
-              {/* Bottom Stat Counters */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="grid grid-cols-4 gap-4 pt-6 border-t border-white/20 max-w-lg mx-auto lg:mx-0 text-left"
-              >
-                <div>
-                  <div className="text-xl sm:text-2xl font-black text-amber-300">500+</div>
-                  <div className="text-[11px] text-emerald-100 font-medium">Farmers</div>
+          {/* Bottom Stat Counters */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="pt-4 sm:pt-6 border-t border-white/20 mt-6 sm:mt-8"
+          >
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 text-center sm:text-left">
+              <div className="sm:border-r sm:border-white/15 sm:pr-4">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#d4f938] tracking-tight font-['Poppins',sans-serif]">
+                  500+
                 </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-black text-amber-300">1000+</div>
-                  <div className="text-[11px] text-emerald-100 font-medium">Products</div>
+                <div className="text-xs sm:text-sm text-emerald-100 font-semibold tracking-wide uppercase mt-0.5">
+                  Farmers
                 </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-black text-amber-300">50+</div>
-                  <div className="text-[11px] text-emerald-100 font-medium">Markets</div>
+              </div>
+              <div className="sm:border-r sm:border-white/15 sm:pr-4">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#d4f938] tracking-tight font-['Poppins',sans-serif]">
+                  1000+
                 </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-black text-amber-300">10k+</div>
-                  <div className="text-[11px] text-emerald-100 font-medium">Orders</div>
+                <div className="text-xs sm:text-sm text-emerald-100 font-semibold tracking-wide uppercase mt-0.5">
+                  Products
                 </div>
-              </motion.div>
-            </div>
-
-            {/* Right Visual: Lush Green Crop Field Image (Clean image only, no floating badges) */}
-            <div className="lg:col-span-5 relative flex justify-center">
-              <div className="relative w-full max-w-md">
-                <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-soft-xl border-4 border-white/20 bg-emerald-950/40">
-                  <img
-                    src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&q=80&w=1000"
-                    alt="Lush green agriculture field"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.src = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=1000';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/20 via-transparent to-transparent" />
+              </div>
+              <div className="sm:border-r sm:border-white/15 sm:pr-4">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#d4f938] tracking-tight font-['Poppins',sans-serif]">
+                  50+
+                </div>
+                <div className="text-xs sm:text-sm text-emerald-100 font-semibold tracking-wide uppercase mt-0.5">
+                  Markets
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#d4f938] tracking-tight font-['Poppins',sans-serif]">
+                  10k+
+                </div>
+                <div className="text-xs sm:text-sm text-emerald-100 font-semibold tracking-wide uppercase mt-0.5">
+                  Orders
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
